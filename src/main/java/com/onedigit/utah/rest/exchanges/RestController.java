@@ -65,7 +65,7 @@ public class RestController{
 
     //TODO: rest to be triggered on page load (or on an app start)
     @GetMapping(path = "/test", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<Void> testFlux() throws Exception {
-        return adapter.getMarketData();
+    public void testFlux() throws Exception {
+        adapter.getMarketData().subscribe();
     }
 }

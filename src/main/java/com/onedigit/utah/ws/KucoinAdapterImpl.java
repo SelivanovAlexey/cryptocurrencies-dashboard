@@ -45,36 +45,53 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
         JsonKucoinResponseDTO tokenResponse = getConnectToken();
         String endpoint = getEndpointFromConnectTokenResponse(tokenResponse);
         String token = getTokenFromConnectTokenResponse(tokenResponse);
+        Integer pingInterval = getPingIntervalFromConnectTokenResponse(tokenResponse);
+        log.debug("getConnectToken info: {}", tokenResponse);
 
-        //TODO: make ping-pong logic
         //TODO: make storing data in non-blocking cache map
         return kucoinWsApiClient.execute(
                 URI.create(endpoint + "?token=" + token),
-                session ->
-                        session.receive()
-                                .map(WebSocketMessage::getPayloadAsText)
-                                .log()
-                                .map(payload -> {
-                                    //TODO: replace with general error handling
-                                    try {
-                                        return mapper.readValue(payload, KucoinWsMessage.class);
-                                    } catch (JsonProcessingException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                })
-                                .flatMap(message -> {
-                                    if (message.getType().equals("welcome")){
-                                        return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA)))).log();
-                                    }
-                                    if (message.getType().equals("message")){
-                                       return session.send(Mono.empty());
-                                    }
+                session -> {
+                    Mono<Void> mainFlow = session.receive()
+                            .map(WebSocketMessage::getPayloadAsText)
+                            .map(payload -> {
+                                //TODO: replace with general error handling
+                                try {
+                                    return mapper.readValue(payload, KucoinWsMessage.class);
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
+                            .flatMap(message -> {
+                                if (message.getType().equals("welcome")) {
+                                    log.debug("Received welcome message: {}", message.asJsonString(mapper));
+                                    return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA))));
+                                }
+                                if (message.getType().equals("message")) {
+                                    log.debug("Received price message: {}", message.asJsonString(mapper));
                                     return session.send(Mono.empty());
-                                })
-                                .then());
+                                }
+                                if (message.getType().equals("pong")) {
+                                    log.info("Received pong: {}", message.asJsonString(mapper));
+                                    return session.send(Mono.empty());
+                                }
+                                return session.send(Mono.empty());
+                            })
+                            .then();
+
+                    String pingMessage = KucoinWsMessage.builder()
+                            .type("ping")
+                            .build().asJsonString(mapper);
+
+                    Mono<Void> pingFlow = session.send(Flux.interval(Duration.ofMillis(pingInterval)).flatMap(interval -> {
+                                log.debug("Send ping: {}", pingMessage);
+                                return Mono.just(session.textMessage(pingMessage));
+                            }));
+
+                    return Mono.zip(mainFlow, pingFlow).then().log();
+                });
         //TODO: is there is needed a session killer ?
     }
-
 
     private JsonKucoinResponseDTO getConnectToken() {
         return kucoinRestApiClient
@@ -97,6 +114,15 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                 .map(JsonKucoinResponseDTO::getData)
                 .map(KucoinDataDTO::getToken)
                 .orElseThrow(() -> new Exception("No token was received from Connect Token response"));
+    }
+
+    private Integer getPingIntervalFromConnectTokenResponse(JsonKucoinResponseDTO tokenResponse) throws Exception {
+        return Optional.ofNullable(tokenResponse)
+                .map(JsonKucoinResponseDTO::getData)
+                .map(KucoinDataDTO::getInstanceServers)
+                .flatMap(list -> list.stream().findFirst())
+                .map(KucoinInstanceServerDTO::getPingInterval)
+                .orElseThrow(() -> new Exception("No endpoint was received from Connect Token response"));
     }
 
     private String buildSubscribeMessage(String topic) {

@@ -6,8 +6,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
-import java.math.BigInteger;
-
 @EqualsAndHashCode(callSuper = true)
 @Value
 @Builder
