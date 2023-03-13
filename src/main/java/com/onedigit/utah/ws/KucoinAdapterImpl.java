@@ -2,27 +2,26 @@ package com.onedigit.utah.ws;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.api.kucoin.JsonKucoinResponseDTO;
 import com.onedigit.utah.model.api.kucoin.KucoinDataDTO;
 import com.onedigit.utah.model.api.kucoin.KucoinInstanceServerDTO;
 import com.onedigit.utah.model.api.kucoin.messages.KucoinWsMessage;
 import com.onedigit.utah.rest.api.ExchangeAdapter;
+import com.onedigit.utah.service.MarketLocalCache;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
-import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.DataInput;
-import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Optional;
+import java.util.*;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
@@ -48,7 +47,6 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
         Integer pingInterval = getPingIntervalFromConnectTokenResponse(tokenResponse);
         log.debug("getConnectToken info: {}", tokenResponse);
 
-        //TODO: make storing data in non-blocking cache map
         return kucoinWsApiClient.execute(
                 URI.create(endpoint + "?token=" + token),
                 session -> {
@@ -69,6 +67,12 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                 }
                                 if (message.getType().equals("message")) {
                                     log.debug("Received price message: {}", message.asJsonString(mapper));
+                                    if (message.getSubject().endsWith("USDT")) {
+                                        String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
+                                        Double price = Double.valueOf(message.getData().getPrice());
+                                        MarketLocalCache.getAllExchangesData().get(Exchange.KUCOIN)
+                                                .put(ticker, price);
+                                    }
                                     return session.send(Mono.empty());
                                 }
                                 if (message.getType().equals("pong")) {
@@ -84,9 +88,9 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                             .build().asJsonString(mapper);
 
                     Mono<Void> pingFlow = session.send(Flux.interval(Duration.ofMillis(pingInterval)).flatMap(interval -> {
-                                log.debug("Send ping: {}", pingMessage);
-                                return Mono.just(session.textMessage(pingMessage));
-                            }));
+                        log.info("Send ping: {}", pingMessage);
+                        return Mono.just(session.textMessage(pingMessage));
+                    }));
 
                     return Mono.zip(mainFlow, pingFlow).then().log();
                 });

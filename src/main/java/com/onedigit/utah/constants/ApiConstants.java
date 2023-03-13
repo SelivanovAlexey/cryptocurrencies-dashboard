@@ -9,5 +9,7 @@ public interface ApiConstants {
 
     String KUCOIN_TOPIC_MARKET_DATA = "/market/ticker:all";
 
+    Integer FRONTEND_UPDATE_FREQUENCY = 500;
+
 
 }

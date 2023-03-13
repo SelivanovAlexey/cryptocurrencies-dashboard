@@ -1,28 +1,24 @@
 package com.onedigit.utah.service;
 
-import com.onedigit.utah.model.CoinDTO;
+import com.onedigit.utah.model.Exchange;
+import com.onedigit.utah.util.CumulativeHashMap;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MarketLocalCache {
-    private static final MarketLocalCache cacheInstance = new MarketLocalCache();;
-    private static final List<CoinDTO> coinList = new ArrayList<>();
+    private static final Map<Exchange, CumulativeHashMap<String, Double>> coinMap = new HashMap<>();
 
-    private MarketLocalCache() {
+    static {
+        coinMap.put(Exchange.KUCOIN, new CumulativeHashMap<>());
     }
 
-    public static List<CoinDTO> getCache(){
-        return coinList;
+    private MarketLocalCache() {}
+
+    public static Map<Exchange, CumulativeHashMap<String, Double>> getAllExchangesData(){
+        return coinMap;
     }
 
-    //TODO: useless?
-    public static MarketLocalCache getInstance(){
-        return cacheInstance;
+    public static void flush() {
+        coinMap.forEach((exchange, map)-> map.clear());
     }
-
-
-
-
-
 }
