@@ -9,6 +9,7 @@ import com.onedigit.utah.model.api.kucoin.KucoinInstanceServerDTO;
 import com.onedigit.utah.model.api.kucoin.messages.KucoinWsMessage;
 import com.onedigit.utah.rest.api.ExchangeAdapter;
 import com.onedigit.utah.service.MarketLocalCache;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +33,11 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
     private final WebClient kucoinRestApiClient;
     private final ObjectMapper mapper;
 
+    @PostConstruct
+    public void init() throws Exception {
+       getMarketData().subscribe();
+    }
+
     public KucoinAdapterImpl(@Qualifier("kucoinWsApiClient") WebSocketClient kucoinWebClient, @Qualifier("kucoinApiClient") WebClient kucoinRestApiClient, ObjectMapper mapper) {
         this.kucoinWsApiClient = kucoinWebClient;
         this.kucoinRestApiClient = kucoinRestApiClient;
@@ -47,6 +53,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
         Integer pingInterval = getPingIntervalFromConnectTokenResponse(tokenResponse);
         log.debug("getConnectToken info: {}", tokenResponse);
 
+        //TODO: to refactor with handle method
         return kucoinWsApiClient.execute(
                 URI.create(endpoint + "?token=" + token),
                 session -> {
@@ -71,8 +78,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
                                         Double price = Double.valueOf(message.getData().getPrice());
                                         MarketLocalCache.getAllExchangesData().get(Exchange.KUCOIN)
-                                                .put(ticker, price);
-                                    }
+                                                .put(ticker, price);}
                                     return session.send(Mono.empty());
                                 }
                                 if (message.getType().equals("pong")) {

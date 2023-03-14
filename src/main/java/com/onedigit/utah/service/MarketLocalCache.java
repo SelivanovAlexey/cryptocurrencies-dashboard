@@ -17,8 +17,4 @@ public class MarketLocalCache {
     public static Map<Exchange, CumulativeHashMap<String, Double>> getAllExchangesData(){
         return coinMap;
     }
-
-    public static void flush() {
-        coinMap.forEach((exchange, map)-> map.clear());
-    }
 }

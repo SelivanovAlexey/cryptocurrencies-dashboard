@@ -28,6 +28,7 @@ public class CumulativeHashMap<K, V> extends HashMap<K, V> {
     }
 
     public Map<K,V> getExchangeData(){
+        valuesToUpdate.clear();
         return this;
     }
 
