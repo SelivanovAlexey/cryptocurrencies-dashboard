@@ -1,10 +1,10 @@
 package com.onedigit.utah.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Configurable;
 
-@Configurable
+@JsonInclude(JsonInclude.Include. NON_NULL)
 public class JsonSerializable {
 
     @SneakyThrows

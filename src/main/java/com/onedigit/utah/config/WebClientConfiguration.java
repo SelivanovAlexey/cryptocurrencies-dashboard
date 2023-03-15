@@ -1,6 +1,5 @@
 package com.onedigit.utah.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -15,7 +14,6 @@ import static com.onedigit.utah.constants.ApiConstants.KUCOIN_API_BASE_URL;
 
 
 @Configuration
-@Slf4j
 public class WebClientConfiguration {
     final int frameSize = 16 * 1024 * 1024;
     final ExchangeStrategies strategy = ExchangeStrategies.builder()

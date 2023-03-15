@@ -9,7 +9,7 @@ import com.onedigit.utah.model.api.kucoin.rest.KucoinRestInstanceServer;
 import com.onedigit.utah.model.api.kucoin.rest.KucoinRestResponse;
 import com.onedigit.utah.model.api.kucoin.ws.KucoinWsMessage;
 import com.onedigit.utah.service.MarketLocalCache;
-import jakarta.annotation.PostConstruct;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,11 +33,6 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
     private final WebClient kucoinRestApiClient;
     private final ObjectMapper mapper;
 
-    @PostConstruct
-    public void init() throws Exception {
-       getMarketData().subscribe();
-    }
-
     public KucoinAdapterImpl(@Qualifier("webSocketClient") WebSocketClient webSocketClient,
                              @Qualifier("kucoinApiClient") WebClient kucoinRestApiClient, ObjectMapper mapper) {
         this.webSocketClient = webSocketClient;
@@ -47,7 +42,8 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
 
     //TODO: make first rest call to get all market data and ONLY after that create a ws connection
     @Override
-    public Mono<Void> getMarketData() throws Exception {
+    @SneakyThrows
+    public Mono<Void> getMarketData() {
         log.debug("Started getMarkedData");
         KucoinRestResponse tokenResponse = getConnectToken();
         String endpoint = getEndpointFromConnectTokenResponse(tokenResponse);
