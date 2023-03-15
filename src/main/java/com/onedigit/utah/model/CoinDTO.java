@@ -7,5 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class CoinDTO {
     private String ticker;
+    private Exchange exchange;
     private Double price;
 }

@@ -1,6 +1,6 @@
 package com.onedigit.utah.rest.exchanges;
 
-import com.onedigit.utah.model.Exchange;
+import com.onedigit.utah.model.CoinDTO;
 import com.onedigit.utah.service.MarketLocalCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -11,7 +11,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Map;
+import java.util.List;
 
 import static com.onedigit.utah.constants.ApiConstants.FRONTEND_UPDATE_FREQUENCY;
 
@@ -20,23 +20,22 @@ import static com.onedigit.utah.constants.ApiConstants.FRONTEND_UPDATE_FREQUENCY
 @Slf4j
 public class RestController {
 
-    //TODO: to add spread calculation
     @GetMapping(path = "/prices", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<Map<String, Double>>> getPrices() {
-        Mono<ServerSentEvent<Map<String, Double>>> firstFrame = Mono.just(MarketLocalCache.getAllExchangesData().get(Exchange.KUCOIN).getExchangeData())
-                .map(coins -> ServerSentEvent.<Map<String, Double>>builder()
-                        .event("prices.kucoin")
+    public Flux<ServerSentEvent<List<CoinDTO>>> getPrices() {
+        Mono<ServerSentEvent<List<CoinDTO>>> firstFrame = Mono.just(MarketLocalCache.getAllExchangesData())
+                .map(coins -> ServerSentEvent.<List<CoinDTO>>builder()
+                        .id(String.valueOf(coins.size()))
+                        .event("prices")
                         .data(coins)
                         .comment("Full market data")
                         .build());
 
-        Flux<ServerSentEvent<Map<String, Double>>> stream = Flux.interval(Duration.ofMillis(FRONTEND_UPDATE_FREQUENCY))
+        Flux<ServerSentEvent<List<CoinDTO>>> stream = Flux.interval(Duration.ofMillis(FRONTEND_UPDATE_FREQUENCY))
                 .map(sequence -> MarketLocalCache
-                        .getAllExchangesData()
-                        .get(Exchange.KUCOIN)
                         .getValuesToUpdate())
-                .map(coins -> ServerSentEvent.<Map<String, Double>>builder()
-                        .event("prices.kucoin")
+                .map(coins -> ServerSentEvent.<List<CoinDTO>>builder()
+                        .id(String.valueOf(coins.size()))
+                        .event("prices")
                         .data(coins)
                         .build());
         return Flux.concat(firstFrame, stream);

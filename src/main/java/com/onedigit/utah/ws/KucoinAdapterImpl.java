@@ -44,6 +44,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
         this.mapper = mapper;
     }
 
+    //TODO: make first rest call to get all market data and ONLY after that create a ws connection
     @Override
     public Mono<Void> getMarketData() throws Exception {
         log.debug("Started getMarkedData");
@@ -60,7 +61,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                     Mono<Void> mainFlow = session.receive()
                             .map(WebSocketMessage::getPayloadAsText)
                             .map(payload -> {
-                                //TODO: replace with general error handling
+                                //TODO: to replace with general error handling
                                 try {
                                     return mapper.readValue(payload, KucoinWsMessage.class);
                                 } catch (JsonProcessingException e) {
@@ -77,8 +78,9 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                     if (message.getSubject().endsWith("USDT")) {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
                                         Double price = Double.valueOf(message.getData().getPrice());
-                                        MarketLocalCache.getAllExchangesData().get(Exchange.KUCOIN)
-                                                .put(ticker, price);}
+
+                                        MarketLocalCache.put(ticker, Exchange.KUCOIN, price);
+                                    }
                                     return session.send(Mono.empty());
                                 }
                                 if (message.getType().equals("pong")) {
