@@ -16,8 +16,8 @@ function getKeyByValue(object, value) {
 
 window.onload =
     () => {
-        subscribe("kucoin")
-        subscribe("bybit")
+        // subscribe("kucoin")
+        // subscribe("bybit")
     }
 
 function createRow(...cellsValues) {

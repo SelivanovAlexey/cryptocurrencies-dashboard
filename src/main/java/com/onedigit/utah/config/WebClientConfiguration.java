@@ -9,8 +9,8 @@ import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClien
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.netty.http.client.HttpClient;
 
-import static com.onedigit.utah.constants.ApiConstants.BYBIT_API_BASE_URL;
-import static com.onedigit.utah.constants.ApiConstants.KUCOIN_API_BASE_URL;
+import static com.onedigit.utah.constants.ApiConstants.BYBIT_API_REST_BASE_URL;
+import static com.onedigit.utah.constants.ApiConstants.KUCOIN_API_REST_BASE_URL;
 
 
 @Configuration
@@ -23,7 +23,7 @@ public class WebClientConfiguration {
     public WebClient kucoinApiClient(WebClient.Builder builder) {
         return builder
                 .exchangeStrategies(strategy)
-                .baseUrl(KUCOIN_API_BASE_URL).build();
+                .baseUrl(KUCOIN_API_REST_BASE_URL).build();
     }
     @Bean
     public WebClient bybitApiClient(WebClient.Builder builder) {
@@ -32,7 +32,7 @@ public class WebClientConfiguration {
                 .clientConnector(new ReactorClientHttpConnector(
                         HttpClient.create().wiretap(true)
                 ))
-                .baseUrl(BYBIT_API_BASE_URL).build();
+                .baseUrl(BYBIT_API_REST_BASE_URL).build();
     }
     @Bean
     public WebSocketClient webSocketClient() {

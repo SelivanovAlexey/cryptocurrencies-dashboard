@@ -13,7 +13,8 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.List;
 
-import static com.onedigit.utah.constants.ApiConstants.FRONTEND_UPDATE_FREQUENCY;
+import static com.onedigit.utah.constants.ApiConstants.FRONTEND_UPDATE_FREQUENCY_MS;
+
 
 @org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/kucoin")
@@ -22,6 +23,7 @@ public class RestController {
 
     @GetMapping(path = "/prices", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<List<CoinDTO>>> getPrices() {
+
         Mono<ServerSentEvent<List<CoinDTO>>> firstFrame = Mono.just(MarketLocalCache.getAllExchangesData())
                 .map(coins -> ServerSentEvent.<List<CoinDTO>>builder()
                         .id(String.valueOf(coins.size()))
@@ -30,9 +32,9 @@ public class RestController {
                         .comment("Full market data")
                         .build());
 
-        Flux<ServerSentEvent<List<CoinDTO>>> stream = Flux.interval(Duration.ofMillis(FRONTEND_UPDATE_FREQUENCY))
+        Flux<ServerSentEvent<List<CoinDTO>>> stream = Flux.interval(Duration.ofMillis(FRONTEND_UPDATE_FREQUENCY_MS))
                 .map(sequence -> MarketLocalCache
-                        .getValuesToUpdate())
+                        .getAllExchangesData())
                 .map(coins -> ServerSentEvent.<List<CoinDTO>>builder()
                         .id(String.valueOf(coins.size()))
                         .event("prices")

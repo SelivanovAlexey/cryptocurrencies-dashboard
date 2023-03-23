@@ -26,6 +26,9 @@ import java.util.Optional;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
+/**
+ * Implemented with WebSocket protocol
+ */
 @Slf4j
 @Service
 public class KucoinAdapterImpl implements ExchangeAdapter {
@@ -44,7 +47,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
     @Override
     @SneakyThrows
     public Mono<Void> getMarketData() {
-        log.debug("Started getMarkedData");
+        log.debug("Started getMarkedData from kucoin ");
         KucoinRestResponse tokenResponse = getConnectToken();
         String endpoint = getEndpointFromConnectTokenResponse(tokenResponse);
         String token = getTokenFromConnectTokenResponse(tokenResponse);
@@ -71,7 +74,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                     return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA))));
                                 }
                                 if (message.getType().equals("message")) {
-                                    log.debug("Received price message: {}", message.asJsonString(mapper));
+//                                    log.debug("Received price message: {}", message.asJsonString(mapper));
                                     if (message.getSubject().endsWith("USDT")) {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
                                         Double price = Double.valueOf(message.getData().getPrice());
@@ -105,7 +108,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
     private KucoinRestResponse getConnectToken() {
         return kucoinRestApiClient
                 .post()
-                .uri(URI.create(KUCOIN_API_BASE_URL + KUCOIN_API_GET_CONNECT_TOKEN_URL))
+                .uri(URI.create(KUCOIN_API_REST_BASE_URL + KUCOIN_API_REST_GET_CONNECT_TOKEN_URL))
                 .retrieve().bodyToMono(KucoinRestResponse.class).block();
     }
 

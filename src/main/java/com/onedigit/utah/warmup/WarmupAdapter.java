@@ -19,6 +19,7 @@ public class WarmupAdapter {
     @EventListener(ApplicationReadyEvent.class)
     public void doAfterStartup() {
         provider.stream()
+//                .filter(adapter -> adapter.getClass().equals(BybitAdapterImpl.class))
                 .map(ExchangeAdapter::getMarketData)
                 .forEach(Mono::subscribe);
     }
