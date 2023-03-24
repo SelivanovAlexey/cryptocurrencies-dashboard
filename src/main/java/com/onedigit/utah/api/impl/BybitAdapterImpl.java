@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
@@ -57,7 +58,7 @@ public class BybitAdapterImpl implements ExchangeAdapter {
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "USDT"))
                 .forEach(ticker -> {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "USDT");
-                    Double price = Double.valueOf(ticker.getLastPrice());
+                    BigDecimal price = new BigDecimal(ticker.getLastPrice());
                     MarketLocalCache.put(tt, Exchange.BYBIT, price);
                 });
         return response;

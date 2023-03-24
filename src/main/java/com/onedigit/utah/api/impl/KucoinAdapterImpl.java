@@ -20,6 +20,7 @@ import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Optional;
@@ -77,7 +78,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
 //                                    log.debug("Received price message: {}", message.asJsonString(mapper));
                                     if (message.getSubject().endsWith("USDT")) {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
-                                        Double price = Double.valueOf(message.getData().getPrice());
+                                        BigDecimal price = new BigDecimal(message.getData().getPrice());
 
                                         MarketLocalCache.put(ticker, Exchange.KUCOIN, price);
                                     }

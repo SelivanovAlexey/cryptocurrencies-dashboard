@@ -1,12 +1,20 @@
 package com.onedigit.utah.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CoinDTO {
+    @NonNull
     private String ticker;
+    @NonNull
     private Exchange exchange;
-    private Double price;
+    @NonNull
+    private BigDecimal price;
+    private List<SpreadDTO> spreadList;
 }
