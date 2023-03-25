@@ -9,6 +9,7 @@ import com.onedigit.utah.model.api.kucoin.rest.KucoinRestInstanceServer;
 import com.onedigit.utah.model.api.kucoin.rest.KucoinRestResponse;
 import com.onedigit.utah.model.api.kucoin.ws.KucoinWsMessage;
 import com.onedigit.utah.service.MarketLocalCache;
+import com.onedigit.utah.service.MarketLocalCache2;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -81,6 +82,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                         BigDecimal price = new BigDecimal(message.getData().getPrice());
 
                                         MarketLocalCache.put(ticker, Exchange.KUCOIN, price);
+
                                     }
                                     return session.send(Mono.empty());
                                 }
@@ -101,7 +103,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                         return Mono.just(session.textMessage(pingMessage));
                     }));
 
-                    return Mono.zip(mainFlow, pingFlow).then().log();
+                    return Mono.zip(mainFlow, pingFlow).then();
                 });
         //TODO: is there is needed a session killer ?
     }

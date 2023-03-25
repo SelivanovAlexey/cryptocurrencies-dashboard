@@ -4,6 +4,7 @@ import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.api.bybit.rest.BybitRestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
+import com.onedigit.utah.service.MarketLocalCache2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -59,6 +60,7 @@ public class BybitAdapterImpl implements ExchangeAdapter {
                 .forEach(ticker -> {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(ticker.getLastPrice());
+
                     MarketLocalCache.put(tt, Exchange.BYBIT, price);
                 });
         return response;

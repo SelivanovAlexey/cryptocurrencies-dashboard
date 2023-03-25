@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
+//TODO: to test performance in cache and choose correct model: flat or mapped(MarketLocalCache2)
 //TODO: implement sending of updated values
 @Slf4j
 public class MarketLocalCache {
@@ -19,7 +20,7 @@ public class MarketLocalCache {
     private MarketLocalCache() {}
 
     public static void put(String ticker, Exchange exchange, BigDecimal price) {
-          coinMap.stream().filter(coin -> coin.getTicker().equals(ticker) && coin.getExchange().equals(exchange)).findFirst().ifPresentOrElse(coin -> {
+        coinMap.stream().filter(coin -> coin.getTicker().equals(ticker) && coin.getExchange().equals(exchange)).findFirst().ifPresentOrElse(coin -> {
             if (!coin.getPrice().equals(price)) {
                 coin.setPrice(price);
             }

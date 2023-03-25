@@ -2,6 +2,7 @@ package com.onedigit.utah.controllers;
 
 import com.onedigit.utah.model.CoinDTO;
 import com.onedigit.utah.service.MarketLocalCache;
+import com.onedigit.utah.service.MarketLocalCache2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
