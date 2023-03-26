@@ -4,7 +4,6 @@ import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.api.bybit.rest.BybitRestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
-import com.onedigit.utah.service.MarketLocalCache2;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,13 +19,13 @@ import static com.onedigit.utah.constants.ApiConstants.*;
 /**
  * Implemented with REST protocol
  */
-@Service
 @Slf4j
+@Service
 public class BybitAdapterImpl implements ExchangeAdapter {
 
     private final WebClient bybitRestApiClient;
 
-    public BybitAdapterImpl(@Qualifier("bybitApiClient") WebClient bybitRestApiClient) {
+    public BybitAdapterImpl(@Qualifier("bybitRestApiClient") WebClient bybitRestApiClient) {
         this.bybitRestApiClient = bybitRestApiClient;
     }
 
@@ -39,29 +38,30 @@ public class BybitAdapterImpl implements ExchangeAdapter {
     /**
      * Retrieves only -USDT tickers
      */
-    private Mono<Void> getAllTickers(){
+    private Mono<Void> getAllTickers() {
         return bybitRestApiClient
                 .get()
                 .uri(uruBuilder ->
-                    uruBuilder
-                            .path(BYBIT_API_REST_GET_TICKERS)
-                            .queryParam("category", "spot")
-                            .build())
+                        uruBuilder
+                                .path(BYBIT_API_REST_GET_TICKERS)
+                                .queryParam("category", "spot")
+                                .build())
                 .retrieve()
                 .bodyToMono(BybitRestResponse.class)
-                .delaySubscription(Duration.ofMillis(BYBIT_REST_CALLS_FREQUENCY_MS))
+                .delaySubscription(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS))
                 .repeat()
                 .map(this::storeTickersData).then();
     }
 
-    private BybitRestResponse storeTickersData(BybitRestResponse response){
+    private BybitRestResponse storeTickersData(BybitRestResponse response) {
         response.getResult().getTickers().stream()
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "USDT"))
                 .forEach(ticker -> {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(ticker.getLastPrice());
 
-                    MarketLocalCache.put(tt, Exchange.BYBIT, price);
+                    MarketLocalCache.getTickerInfo(tt).getPriceToExchange().put(Exchange.BYBIT, price);
+
                 });
         return response;
     }

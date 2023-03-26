@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @RequiredArgsConstructor
@@ -13,8 +14,6 @@ public class CoinDTO {
     @NonNull
     private String ticker;
     @NonNull
-    private Exchange exchange;
-    @NonNull
-    private BigDecimal price;
-    private List<SpreadDTO> spreadList;
+    private Map<Exchange, BigDecimal> priceToExchange;
+    private List<SpreadDTO> spreads;
 }

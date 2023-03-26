@@ -9,7 +9,6 @@ import com.onedigit.utah.model.api.kucoin.rest.KucoinRestInstanceServer;
 import com.onedigit.utah.model.api.kucoin.rest.KucoinRestResponse;
 import com.onedigit.utah.model.api.kucoin.ws.KucoinWsMessage;
 import com.onedigit.utah.service.MarketLocalCache;
-import com.onedigit.utah.service.MarketLocalCache2;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +38,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
     private final ObjectMapper mapper;
 
     public KucoinAdapterImpl(@Qualifier("webSocketClient") WebSocketClient webSocketClient,
-                             @Qualifier("kucoinApiClient") WebClient kucoinRestApiClient, ObjectMapper mapper) {
+                             @Qualifier("kucoinRestApiClient") WebClient kucoinRestApiClient, ObjectMapper mapper) {
         this.webSocketClient = webSocketClient;
         this.kucoinRestApiClient = kucoinRestApiClient;
         this.mapper = mapper;
@@ -81,7 +80,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
                                         BigDecimal price = new BigDecimal(message.getData().getPrice());
 
-                                        MarketLocalCache.put(ticker, Exchange.KUCOIN, price);
+                                        MarketLocalCache.getTickerInfo(ticker).getPriceToExchange().put(Exchange.KUCOIN, price);
 
                                     }
                                     return session.send(Mono.empty());

@@ -2,7 +2,6 @@ package com.onedigit.utah.controllers;
 
 import com.onedigit.utah.model.CoinDTO;
 import com.onedigit.utah.service.MarketLocalCache;
-import com.onedigit.utah.service.MarketLocalCache2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -34,8 +33,7 @@ public class RestController {
                         .build());
 
         Flux<ServerSentEvent<List<CoinDTO>>> stream = Flux.interval(Duration.ofMillis(FRONTEND_UPDATE_FREQUENCY_MS))
-                .map(sequence -> MarketLocalCache
-                        .getAllExchangesData())
+                .map(sequence -> MarketLocalCache.getAllExchangesData())
                 .map(coins -> ServerSentEvent.<List<CoinDTO>>builder()
                         .id(String.valueOf(coins.size()))
                         .event("prices")

@@ -9,8 +9,7 @@ import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClien
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.netty.http.client.HttpClient;
 
-import static com.onedigit.utah.constants.ApiConstants.BYBIT_API_REST_BASE_URL;
-import static com.onedigit.utah.constants.ApiConstants.KUCOIN_API_REST_BASE_URL;
+import static com.onedigit.utah.constants.ApiConstants.*;
 
 
 @Configuration
@@ -20,13 +19,20 @@ public class WebClientConfiguration {
             .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(frameSize))
             .build();
     @Bean
-    public WebClient kucoinApiClient(WebClient.Builder builder) {
+    public WebClient kucoinRestApiClient(WebClient.Builder builder) {
         return builder
                 .exchangeStrategies(strategy)
                 .baseUrl(KUCOIN_API_REST_BASE_URL).build();
     }
+
     @Bean
-    public WebClient bybitApiClient(WebClient.Builder builder) {
+    public WebClient mexcRestApiClient(WebClient.Builder builder) {
+        return builder
+                .exchangeStrategies(strategy)
+                .baseUrl(MEXC_API_REST_BASE_URL).build();
+    }
+    @Bean
+    public WebClient bybitRestApiClient(WebClient.Builder builder) {
         return builder
                 .exchangeStrategies(strategy)
                 .clientConnector(new ReactorClientHttpConnector(

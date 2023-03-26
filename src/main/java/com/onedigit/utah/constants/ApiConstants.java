@@ -6,6 +6,8 @@ public interface ApiConstants {
      * OVERALL REGION
      */
     Integer FRONTEND_UPDATE_FREQUENCY_MS = 1000;
+    //TODO: to remove when implement ws approach
+    Integer REST_API_CALLS_FREQUENCY_MS = 0;
 
     /**
      * KUCOIN EXCHANGE REGION
@@ -21,7 +23,12 @@ public interface ApiConstants {
     String BYBIT_API_REST_BASE_URL = "https://api.bybit.com";
     String BYBIT_API_REST_GET_TICKERS = "/v5/market/tickers";
     String BYBIT_API_WS_SPOT_URL = "wss://stream.bybit.com/v5/public/spot";
-    //TODO: to remove when implement ws approach
-    Integer BYBIT_REST_CALLS_FREQUENCY_MS = 0;
+
+    /**
+     * MEXC EXCHANGE REGION
+     */
+
+    String MEXC_API_REST_BASE_URL = "https://api.mexc.com";
+    String MEXC_API_REST_GET_TICKERS = "/api/v3/ticker/price";
 
 }
