@@ -1,6 +1,8 @@
 package com.onedigit.utah.lifecycle;
 
 import com.onedigit.utah.api.ExchangeAdapter;
+import com.onedigit.utah.api.impl.BybitAdapterImpl;
+import com.onedigit.utah.api.impl.KucoinAdapterImpl;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -19,7 +21,7 @@ public class WarmupService {
     @EventListener(ApplicationReadyEvent.class)
     public void doAfterStartup() {
         provider.stream()
-//                .filter(adapter -> adapter.getClass().equals(KucoinAdapterImpl.class) || adapter.getClass().equals(BybitAdapterImpl.class))
+//                .filter(adapter -> adapter.getClass().equals(KucoinAdapterImpl.class))
                 .map(ExchangeAdapter::getMarketData)
                 .forEach(Mono::subscribe);
     }

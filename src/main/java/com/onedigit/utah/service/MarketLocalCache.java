@@ -3,6 +3,8 @@ package com.onedigit.utah.service;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.SpreadDTO;
 import com.onedigit.utah.model.CoinDTO;
+import com.onedigit.utah.model.event.CoinUpdateDTO;
+import com.onedigit.utah.service.event.PriceChangeEventProcessor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -12,8 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-//TODO: implement sending of updated values
 @Slf4j
 public class MarketLocalCache {
     private static final Map<String, CoinDTO> coinMap = new HashMap<>();
@@ -26,8 +26,7 @@ public class MarketLocalCache {
         return resultList;
     }
 
-    private static void fillSpreads(CoinDTO targetCoin){
-        Map<Exchange, BigDecimal> map = targetCoin.getPriceToExchange();
+    public static List<SpreadDTO> calculateSpreads(Map<Exchange, BigDecimal> map){
         List<SpreadDTO> spreads = new ArrayList<>();
         for(Map.Entry<Exchange, BigDecimal> entry: map.entrySet()) {
             Exchange exchange = entry.getKey();
@@ -41,15 +40,50 @@ public class MarketLocalCache {
                 spreads.add(spread);
             }
         }
-        targetCoin.setSpreads(spreads);
+        return spreads;
+    }
+
+    private static void fillSpreads(CoinDTO coin){
+        coin.setSpreads(calculateSpreads(coin.getPriceToExchange()));
     }
 
     public static CoinDTO getTickerInfo(String ticker) {
         CoinDTO ti = coinMap.get(ticker);
         if (ti == null){
-            ti = new CoinDTO(ticker, new HashMap<>());
+            ti = new CoinDTO(ticker, new TickerInfoMap(ticker));
             coinMap.put(ticker, ti);
         }
         return ti;
+    }
+
+    @Slf4j
+    static class TickerInfoMap extends HashMap<Exchange, BigDecimal> {
+        private final String ticker;
+
+        public TickerInfoMap(TickerInfoMap tickerInfoMap, String ticker) {
+            super(tickerInfoMap);
+            this.ticker = ticker;
+        }
+
+        public TickerInfoMap(String ticker) {
+            this.ticker = ticker;
+        }
+
+        @Override
+        public BigDecimal put(Exchange key, BigDecimal value) {
+            BigDecimal price = this.get(key);
+            if (!value.equals(price)) {
+                price = super.put(key, value);
+                CoinUpdateDTO coinUpdate = prepareResponse(key, value);
+                PriceChangeEventProcessor.publish(coinUpdate);
+            }
+            return price;
+        }
+
+        private CoinUpdateDTO prepareResponse(Exchange exchange, BigDecimal price) {
+            TickerInfoMap cachedMap = new TickerInfoMap(this, ticker);
+            List<SpreadDTO> spreads = MarketLocalCache.calculateSpreads(cachedMap);
+            return new CoinUpdateDTO(ticker, exchange, price, spreads);
+        }
     }
 }

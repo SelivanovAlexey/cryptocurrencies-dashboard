@@ -44,7 +44,6 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
         this.mapper = mapper;
     }
 
-    //TODO: make first rest call to get all market data and ONLY after that create a ws connection
     @Override
     @SneakyThrows
     public Mono<Void> getMarketData() {
@@ -55,7 +54,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
         Integer pingInterval = getPingIntervalFromConnectTokenResponse(tokenResponse);
         log.debug("getConnectToken info: {}", tokenResponse);
 
-        //TODO: to refactor with handle method
+        //TODO: to refactor with handle method and generalize
         return webSocketClient.execute(
                 URI.create(endpoint + "?token=" + token),
                 session -> {
@@ -71,7 +70,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                             })
                             .flatMap(message -> {
                                 if (message.getType().equals("welcome")) {
-                                    log.debug("Received welcome message: {}", message.asJsonString(mapper));
+                                    log.debug("Received welcome message: {}", message.asJsonString());
                                     return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA))));
                                 }
                                 if (message.getType().equals("message")) {
@@ -80,13 +79,15 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
                                         BigDecimal price = new BigDecimal(message.getData().getPrice());
 
-                                        MarketLocalCache.getTickerInfo(ticker).getPriceToExchange().put(Exchange.KUCOIN, price);
+                                        MarketLocalCache.getTickerInfo(ticker)
+                                                .getPriceToExchange()
+                                                .put(Exchange.KUCOIN, price);
 
                                     }
                                     return session.send(Mono.empty());
                                 }
                                 if (message.getType().equals("pong")) {
-                                    log.info("Received pong: {}", message.asJsonString(mapper));
+                                    log.info("Received pong: {}", message.asJsonString());
                                     return session.send(Mono.empty());
                                 }
                                 return session.send(Mono.empty());
@@ -95,7 +96,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
 
                     String pingMessage = KucoinWsMessage.builder()
                             .type("ping")
-                            .build().asJsonString(mapper);
+                            .build().asJsonString();
 
                     Mono<Void> pingFlow = session.send(Flux.interval(Duration.ofMillis(pingInterval)).flatMap(interval -> {
                         log.info("Send ping: {}", pingMessage);
@@ -144,7 +145,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                 KucoinWsMessage.builder()
                         .topic(topic)
                         .type("subscribe")
-                        .build().asJsonString(mapper);
+                        .build().asJsonString();
     }
 }
 

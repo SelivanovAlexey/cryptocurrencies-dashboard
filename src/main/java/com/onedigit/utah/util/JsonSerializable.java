@@ -1,14 +1,15 @@
 package com.onedigit.utah.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import org.springframework.stereotype.Component;
 
 @JsonInclude(JsonInclude.Include. NON_NULL)
+@Component
 public class JsonSerializable {
 
     @SneakyThrows
-    public String asJsonString(ObjectMapper mapper){
-        return mapper.writeValueAsString(this);
+    public String asJsonString(){
+        return CommonUtils.getJsonMapper().writeValueAsString(this);
     }
 }
