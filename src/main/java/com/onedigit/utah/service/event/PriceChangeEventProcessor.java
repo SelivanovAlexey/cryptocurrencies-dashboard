@@ -1,6 +1,6 @@
 package com.onedigit.utah.service.event;
 
-import com.onedigit.utah.model.event.CoinUpdateDTO;
+import com.onedigit.utah.model.CoinDTO;
 import com.onedigit.utah.model.event.PriceChangeEventListener;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ public class PriceChangeEventProcessor {
         PriceChangeEventProcessor.listener = listener;
     }
 
-    public static void publish(CoinUpdateDTO coinUpdateDTO) {
+    public static void publish(CoinDTO coinUpdateDTO) {
         if (listener != null)
             PriceChangeEventProcessor.listener.onPublish(coinUpdateDTO);
     }

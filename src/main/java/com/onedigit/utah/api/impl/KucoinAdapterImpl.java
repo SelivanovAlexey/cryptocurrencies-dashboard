@@ -74,7 +74,6 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                     return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA))));
                                 }
                                 if (message.getType().equals("message")) {
-//                                    log.debug("Received price message: {}", message.asJsonString(mapper));
                                     if (message.getSubject().endsWith("USDT")) {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
                                         BigDecimal price = new BigDecimal(message.getData().getPrice());

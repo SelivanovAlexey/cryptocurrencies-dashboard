@@ -1,6 +1,7 @@
 package com.onedigit.utah.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 @Data
 @RequiredArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include. NON_NULL)
 public class CoinDTO {
     @NonNull

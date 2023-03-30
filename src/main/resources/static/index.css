@@ -24,14 +24,6 @@
     border-bottom: 1px solid #dddddd;
 }
 
-/*.styled-table tbody  tr:nth-of-type(even) {*/
-/*    background-color: #f3f3f3;*/
-/*}*/
-
-/*.styled-table thead tr:nth-of-type(even) {*/
-/*    background-color: #f3f3f3;*/
-/*}*/
-
 .styled-table thead tr:last-of-type {
     border-bottom: 2px solid #009879;
 }
@@ -40,4 +32,16 @@
     display: flex;
     justify-content: center;
     gap: 200px;
+}
+
+.column-price {
+    width: 10vh;
+}
+
+.column-ticker {
+    width: 5vh;
+}
+
+.column-spreads {
+    width: 15vh;
 }

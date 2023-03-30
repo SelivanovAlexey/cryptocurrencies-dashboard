@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <link rel="stylesheet" type="text/css" href="index.css"/>
@@ -10,22 +10,27 @@
     <table class="styled-table" id="price-table">
         <thead>
         <tr>
-            <th rowspan="2">Ticker</th>
+            <th rowspan="2" class="column-ticker">Ticker</th>
             <th colspan="6">USDT</th>
+            <th rowspan="2" class="column-spreads">Spreads</th>
         </tr>
         <tr>
-            <th>Kucoin</th>
-            <th>Bybit</th>
-            <th>Mexc</th>
-            <th>Binance</th>
-            <th>Gate</th>
-            <th>Huobi</th>
+            <th class="column-price">Kucoin</th>
+            <th class="column-price">Bybit</th>
+            <th class="column-price">Mexc</th>
+            <th class="column-price">Binance</th>
+            <th class="column-price">Gate</th>
+            <th class="column-price">Huobi</th>
         </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+        </tbody>
     </table>
 </div>
 
 </body>
 <script src="index.js"></script>
+<script type = "text/JavaScript" src = "https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js">
+</script>
 </html>
+

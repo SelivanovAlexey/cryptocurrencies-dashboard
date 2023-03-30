@@ -1,6 +1,7 @@
 package com.onedigit.utah.controllers;
 
-import com.onedigit.utah.model.event.CoinUpdateDTO;
+import com.onedigit.utah.model.CoinDTO;
+import com.onedigit.utah.service.MarketLocalCache;
 import com.onedigit.utah.service.event.PriceChangeEventProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -9,27 +10,37 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
-
+import reactor.core.publisher.Mono;
 
 @RequestMapping("/api")
 @Slf4j
 @RestController
-public class Controller {
+public class MainController {
     private final PriceChangeEventProcessor eventProcessor;
 
-    public Controller(PriceChangeEventProcessor eventProcessor) {
+    public MainController(PriceChangeEventProcessor eventProcessor) {
         this.eventProcessor = eventProcessor;
     }
 
     @GetMapping(path = "/prices", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<CoinUpdateDTO>> getPrices() {
-        return Flux.create(sink ->
+    public Flux<ServerSentEvent<CoinDTO>> getPrices() {
+
+        Flux<ServerSentEvent<CoinDTO>> firstFrame = Mono.just(MarketLocalCache.getAllExchangesData())
+                .flatMapMany(Flux::fromIterable)
+                .map(coins -> ServerSentEvent.<CoinDTO>builder()
+                        .event("prices")
+                        .data(coins)
+                        .comment("Full market data")
+                        .build());
+
+        Flux<ServerSentEvent<CoinDTO>> mainFlow = Flux.create(sink ->
                 eventProcessor.register(coinUpdate ->
-                        sink.next(ServerSentEvent.<CoinUpdateDTO>builder()
+                        sink.next(ServerSentEvent.<CoinDTO>builder()
                                 .event("prices")
                                 .data(coinUpdate)
-                                .build()))
-        );
+                                .build())));
+
+        return Flux.concat(firstFrame, mainFlow);
     }
 
     @GetMapping(path = "/test", produces = MediaType.APPLICATION_JSON_VALUE)
