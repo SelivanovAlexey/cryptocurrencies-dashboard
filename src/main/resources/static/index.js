@@ -36,8 +36,9 @@ function setRowData(row, ticker, priceToExchange, spreads) {
         cell.getElementsByClassName("p-diff").item(0).textContent = elem.diff
         cell.getElementsByClassName("p-base").item(0).textContent = elem.base
         cell.getElementsByClassName("p-target").item(0).textContent = elem.target
+        //TODO: check why sometimes color does not set
         if (elem.diff >= 1 && elem.diff < 5)  cell.style.backgroundColor = "#F6D892"
-        if (elem.diff >= 5 && elem.diff < 15)  cell.style.backgroundColor = "#8DB590"
+        if (elem.diff >= 5)  cell.style.backgroundColor = "#8DB590"
     })
 }
 

@@ -84,7 +84,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                     return session.send(Mono.empty());
                                 }
                                 if (message.getType().equals("pong")) {
-                                    log.info("Received pong: {}", message.asJsonString());
+                                    log.debug("Received pong: {}", message.asJsonString());
                                     return session.send(Mono.empty());
                                 }
                                 return session.send(Mono.empty());
@@ -96,7 +96,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                             .build().asJsonString();
 
                     Mono<Void> pingFlow = session.send(Flux.interval(Duration.ofMillis(pingInterval)).flatMap(interval -> {
-                        log.info("Send ping: {}", pingMessage);
+                        log.debug("Send ping: {}", pingMessage);
                         return Mono.just(session.textMessage(pingMessage));
                     }));
 

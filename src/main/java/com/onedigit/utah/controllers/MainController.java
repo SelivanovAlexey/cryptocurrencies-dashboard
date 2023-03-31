@@ -24,7 +24,7 @@ public class MainController {
 
     @GetMapping(path = "/prices", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<CoinDTO>> getPrices() {
-
+        //TODO: sometimes there is spreads in response but without price
         Flux<ServerSentEvent<CoinDTO>> firstFrame = Mono.just(MarketLocalCache.getAllExchangesData())
                 .flatMapMany(Flux::fromIterable)
                 .map(coins -> ServerSentEvent.<CoinDTO>builder()
