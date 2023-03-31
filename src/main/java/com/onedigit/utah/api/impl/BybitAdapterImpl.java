@@ -60,7 +60,7 @@ public class BybitAdapterImpl implements ExchangeAdapter {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(ticker.getLastPrice());
 
-                    MarketLocalCache.getTickerInfo(tt).getPriceToExchange().put(Exchange.BYBIT, price);
+                    MarketLocalCache.put(tt, Exchange.BYBIT, price);
 
                 });
         return response;

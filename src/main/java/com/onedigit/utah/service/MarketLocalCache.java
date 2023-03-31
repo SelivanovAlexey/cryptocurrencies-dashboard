@@ -13,10 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,8 +28,15 @@ public class MarketLocalCache {
 
     private static PropertiesProvider propertiesProvider;
 
+    public static void put(String ticker, Exchange exchange, BigDecimal price) {
+        CoinDTO dto = getTickerInfo(ticker);
+        if (dto != null) {
+            dto.getPriceToExchange().put(exchange, price);
+        }
+    }
+
     @PostConstruct
-    private void initPropertiesProvider(){
+    private void initPropertiesProvider() {
         propertiesProvider = this.staticPropertiesProvider;
     }
 
@@ -41,7 +46,7 @@ public class MarketLocalCache {
     public static List<CoinDTO> getAllExchangesData() {
         List<CoinDTO> resultList = new ArrayList<>(coinMap.values());
         resultList.forEach(MarketLocalCache::fillSpreads);
-        return resultList;
+        return resultList.stream().filter(coindto -> !coindto.getSpreads().isEmpty()).collect(Collectors.toList());
     }
 
     public static List<SpreadDTO> calculateSpreads(Map<Exchange, BigDecimal> map) {
@@ -53,25 +58,40 @@ public class MarketLocalCache {
                 Exchange cExchange = innerEntry.getKey();
                 if (exchange.equals(cExchange)) continue;
                 BigDecimal cPrice = innerEntry.getValue();
-                Double diff = cPrice.subtract(price).divide(price, 5, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
+                Double diff = cPrice.subtract(price).divide(price, 3, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
                 SpreadDTO spread = new SpreadDTO(exchange, cExchange, diff);
                 spreads.add(spread);
             }
         }
-        return spreads;
+        spreads.sort(Comparator.comparing(SpreadDTO::getDiff).reversed());
+        return spreads.stream().limit(3).collect(Collectors.toList());
+//        return spreads;
     }
 
     private static void fillSpreads(CoinDTO coin) {
         coin.setSpreads(calculateSpreads(coin.getPriceToExchange()));
     }
 
-    public static CoinDTO getTickerInfo(String ticker) {
+    private static CoinDTO getTickerInfo(String ticker) {
         CoinDTO ti = coinMap.get(ticker);
-        if (ti == null) {
+        if (ti == null && putCondition(ticker)) {
             ti = new CoinDTO(ticker, new TickerInfoMap(ticker));
             coinMap.put(ticker, ti);
         }
         return ti;
+    }
+
+    /**
+     * @param ticker Coin ticker
+     * @return true for storing in cache
+     */
+
+    private static boolean putCondition(String ticker) {
+        boolean condition = true;
+        condition &= !(ticker.endsWith("2S") || ticker.endsWith("3S") || ticker.endsWith("5S") || ticker.endsWith("10S"));
+        condition &= !(ticker.endsWith("2L") || ticker.endsWith("3L") || ticker.endsWith("5L") || ticker.endsWith("10L"));
+        condition &= propertiesProvider.getIncludeTickers().get(0).isEmpty() ? true : propertiesProvider.getIncludeTickers().contains(ticker);
+        return condition;
     }
 
     @Slf4j
@@ -90,18 +110,13 @@ public class MarketLocalCache {
         @Override
         public BigDecimal put(Exchange key, BigDecimal value) {
             BigDecimal price = this.get(key);
-            if (!value.equals(price) && putCondition(ticker)) {
+            if (!value.equals(price)) {
                 price = super.put(key, value);
                 CoinDTO coinUpdate = prepareResponse(key, value);
-                PriceChangeEventProcessor.publish(coinUpdate);
+                if (!coinUpdate.getSpreads().isEmpty())
+                    PriceChangeEventProcessor.publish(coinUpdate);
             }
             return price;
-        }
-
-        private boolean putCondition(String ticker) {
-            boolean condition = true;
-            condition &= propertiesProvider.getIncludeTickers().get(0).isEmpty() ? true : propertiesProvider.getIncludeTickers().contains(ticker);
-            return condition;
         }
 
         private CoinDTO prepareResponse(Exchange exchange, BigDecimal price) {

@@ -51,7 +51,7 @@ public class MexcAdapterImpl implements ExchangeAdapter {
                     String tt = StringUtils.substringBefore(resp.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(resp.getPrice());
 
-                    MarketLocalCache.getTickerInfo(tt).getPriceToExchange().put(Exchange.MEXC, price);
+                    MarketLocalCache.put(tt, Exchange.MEXC, price);
                 });
         return response;
     }
