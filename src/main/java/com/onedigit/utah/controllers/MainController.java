@@ -3,7 +3,6 @@ package com.onedigit.utah.controllers;
 import com.onedigit.utah.model.CoinDTO;
 import com.onedigit.utah.service.MarketLocalCache;
 import com.onedigit.utah.service.event.PriceChangeEventProcessor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +12,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RequestMapping("/api")
-@Slf4j
 @RestController
 public class MainController {
     private final PriceChangeEventProcessor eventProcessor;

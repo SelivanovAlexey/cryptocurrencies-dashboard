@@ -47,7 +47,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
     @Override
     @SneakyThrows
     public Mono<Void> getMarketData() {
-        log.debug("Started getMarkedData from kucoin ");
+        log.info("Started getMarkedData from kucoin");
         KucoinRestResponse tokenResponse = getConnectToken();
         String endpoint = getEndpointFromConnectTokenResponse(tokenResponse);
         String token = getTokenFromConnectTokenResponse(tokenResponse);
@@ -69,6 +69,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                 }
                             })
                             .flatMap(message -> {
+                                log.debug("Received message: {}", message.asJsonString());
                                 if (message.getType().equals("welcome")) {
                                     log.debug("Received welcome message: {}", message.asJsonString());
                                     return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA))));

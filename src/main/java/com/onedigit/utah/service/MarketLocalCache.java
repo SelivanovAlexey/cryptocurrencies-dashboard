@@ -7,7 +7,6 @@ import com.onedigit.utah.service.event.PriceChangeEventProcessor;
 
 import com.onedigit.utah.util.PropertiesProvider;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +15,7 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Slf4j
+//TODO: check chain networks availability to deposit and withdraw
 @Service
 public class MarketLocalCache {
 
@@ -65,7 +64,6 @@ public class MarketLocalCache {
         }
         spreads.sort(Comparator.comparing(SpreadDTO::getDiff).reversed());
         return spreads.stream().limit(3).collect(Collectors.toList());
-//        return spreads;
     }
 
     private static void fillSpreads(CoinDTO coin) {
@@ -94,7 +92,6 @@ public class MarketLocalCache {
         return condition;
     }
 
-    @Slf4j
     static class TickerInfoMap extends HashMap<Exchange, BigDecimal> {
         private final String ticker;
 

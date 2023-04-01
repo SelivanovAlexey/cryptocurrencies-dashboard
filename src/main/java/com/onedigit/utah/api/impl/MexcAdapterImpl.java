@@ -31,6 +31,7 @@ public class MexcAdapterImpl implements ExchangeAdapter {
 
     @Override
     public Mono<Void> getMarketData() {
+        log.info("Started getMarketData from mexc");
         return mexcRestApiClient
                 .get()
                 .uri(uruBuilder ->
@@ -39,6 +40,10 @@ public class MexcAdapterImpl implements ExchangeAdapter {
                                 .build())
                 .retrieve()
                 .bodyToMono(MexcRestResponse[].class)
+                .map(response -> {
+                    log.debug("Response: {}", Arrays.toString(response));
+                    return response;
+                })
                 .delaySubscription(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS))
                 .repeat()
                 .map(this::storeTickersData).then();

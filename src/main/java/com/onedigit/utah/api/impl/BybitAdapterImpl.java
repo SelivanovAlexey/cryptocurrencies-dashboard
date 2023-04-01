@@ -31,7 +31,7 @@ public class BybitAdapterImpl implements ExchangeAdapter {
 
     @Override
     public Mono<Void> getMarketData() {
-        log.debug("Started getMarketData from bybit");
+        log.info("Started getMarketData from bybit");
         return getAllTickers();
     }
 
@@ -48,6 +48,10 @@ public class BybitAdapterImpl implements ExchangeAdapter {
                                 .build())
                 .retrieve()
                 .bodyToMono(BybitRestResponse.class)
+                .map(response -> {
+                    log.debug("Response: {}", response);
+                    return response;
+                })
                 .delaySubscription(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS))
                 .repeat()
                 .map(this::storeTickersData).then();
