@@ -6,47 +6,14 @@
     </root>
 
     <logger name="com.onedigit.utah.api.impl" level="INFO">
-        <appender-ref ref="ADAPTERS_LOG"/>
+        <appender-ref ref="API_LOG"/>
     </logger>
 
-    <logger name="com.onedigit.utah.api.impl.KucoinAdapterImpl" level="DEBUG">
-        <appender-ref ref="KUCOIN_LOG"/>
+    <logger name="com.onedigit.utah.lifecycle.HealthCheckService" level="INFO">
+        <appender-ref ref="API_LOG"/>
     </logger>
-
-    <logger name="com.onedigit.utah.api.impl.BybitAdapterImpl" level="DEBUG">
-        <appender-ref ref="BYBIT_LOG"/>
-    </logger>
-
-    <logger name="com.onedigit.utah.api.impl.MexcAdapterImpl" level="DEBUG">
-        <appender-ref ref="MEXC_LOG"/>
-    </logger>
-
-    <logger name="com.onedigit.utah.api.impl.BinanceAdapterImpl" level="DEBUG">
-        <appender-ref ref="BINANCE_LOG"/>
-    </logger>
-
-    <logger name="com.onedigit.utah.api.impl.GateAdapterImpl" level="DEBUG">
-        <appender-ref ref="GATE_LOG"/>
-    </logger>
-
-    <logger name="com.onedigit.utah.api.impl.HuobiAdapterImpl" level="DEBUG">
-        <appender-ref ref="HUOBI_LOG"/>
-    </logger>
-
-    <logger name="reactor" level="ERROR">
-        <appender-ref ref="ADAPTERS_LOG"/>
-    </logger>
-
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </layout>
-    </appender>
 
     <appender name="OVERALL_LOG" class="ch.qos.logback.core.FileAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
         <file>logs/application.log</file>
         <append>false</append>
         <encoder>
@@ -54,10 +21,7 @@
         </encoder>
     </appender>
 
-    <appender name="ADAPTERS_LOG" class="ch.qos.logback.core.FileAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
+    <appender name="API_LOG" class="ch.qos.logback.core.FileAppender">
         <file>logs/api.log</file>
         <append>false</append>
         <encoder>
@@ -65,69 +29,4 @@
         </encoder>
     </appender>
 
-    <appender name="KUCOIN_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/adapters/kucoin.log</file>
-        <append>false</append>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>kucoin-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxHistory>1</maxHistory>
-            <totalSizeCap>15MB</totalSizeCap>
-            <maxFileSize>10MB</maxFileSize>
-        </rollingPolicy>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
-    </appender>
-
-    <appender name="BYBIT_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/adapters/bybit.log</file>
-        <append>false</append>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>bybit-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxHistory>1</maxHistory>
-            <totalSizeCap>15MB</totalSizeCap>
-            <maxFileSize>10MB</maxFileSize>
-        </rollingPolicy>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
-    </appender>
-
-    <appender name="MEXC_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/adapters/mexc.log</file>
-        <append>false</append>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>mexc-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxHistory>1</maxHistory>
-            <totalSizeCap>15MB</totalSizeCap>
-            <maxFileSize>10MB</maxFileSize>
-        </rollingPolicy>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
-    </appender>
-
-    <appender name="BINANCE_LOG" class="ch.qos.logback.core.FileAppender">
-        <file>logs/adapters/binance.log</file>
-        <append>false</append>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
-    </appender>
-
-    <appender name="GATE_LOG" class="ch.qos.logback.core.FileAppender">
-        <file>logs/adapters/gate.log</file>
-        <append>false</append>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
-    </appender>
-
-    <appender name="HUOBI_LOG" class="ch.qos.logback.core.FileAppender">
-        <file>logs/adapters/huobi.log</file>
-        <append>false</append>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
-    </appender>
 </configuration>

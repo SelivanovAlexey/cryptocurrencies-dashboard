@@ -1,4 +1,4 @@
-package com.onedigit.utah.api.impl;
+package com.onedigit.utah.api.impl.ws;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.socket.WebSocketMessage;
+import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,10 +33,11 @@ import static com.onedigit.utah.constants.ApiConstants.*;
  */
 @Slf4j
 @Service
-public class KucoinAdapterImpl implements ExchangeAdapter {
+public class KucoinAdapterImpl extends ExchangeAdapter {
     private final WebSocketClient webSocketClient;
     private final WebClient kucoinRestApiClient;
     private final ObjectMapper mapper;
+    private WebSocketSession session;
 
     public KucoinAdapterImpl(@Qualifier("webSocketClient") WebSocketClient webSocketClient,
                              @Qualifier("kucoinRestApiClient") WebClient kucoinRestApiClient, ObjectMapper mapper) {
@@ -58,6 +60,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
         return webSocketClient.execute(
                 URI.create(endpoint + "?token=" + token),
                 session -> {
+                    this.session = session;
                     Mono<Void> mainFlow = session.receive()
                             .map(WebSocketMessage::getPayloadAsText)
                             .map(payload -> {
@@ -69,7 +72,6 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                 }
                             })
                             .flatMap(message -> {
-                                log.debug("Received message: {}", message.asJsonString());
                                 if (message.getType().equals("welcome")) {
                                     log.debug("Received welcome message: {}", message.asJsonString());
                                     return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA))));
@@ -79,7 +81,7 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                         String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
                                         BigDecimal price = new BigDecimal(message.getData().getPrice());
 
-                                        MarketLocalCache.put(ticker, Exchange.KUCOIN, price);
+                                        MarketLocalCache.put(ticker, getExchangeName(), price);
 
                                     }
                                     return session.send(Mono.empty());
@@ -90,6 +92,12 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                                 }
                                 return session.send(Mono.empty());
                             })
+                            .doOnError(error ->
+                                    log.error("Error during websocket session with id:" + session.getId(), error)
+                            )
+                            .doOnCancel(() ->
+                                    log.info("Connection " + session.getId() + " interrupted")
+                            )
                             .then();
 
                     String pingMessage = KucoinWsMessage.builder()
@@ -100,11 +108,10 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                         log.debug("Send ping: {}", pingMessage);
                         return Mono.just(session.textMessage(pingMessage));
                     }));
-
                     return Mono.zip(mainFlow, pingFlow).then();
                 });
-        //TODO: is there is needed a session killer ?
     }
+
 
     private KucoinRestResponse getConnectToken() {
         return kucoinRestApiClient
@@ -145,6 +152,21 @@ public class KucoinAdapterImpl implements ExchangeAdapter {
                         .type("subscribe")
                         .build().asJsonString();
     }
+
+    public Boolean isEnabled() {
+        return true;
+    }
+
+    @Override
+    public Boolean isConnectionActive() {
+        return session != null && session.isOpen();
+    }
+
+    @Override
+    public Exchange getExchangeName() {
+        return Exchange.KUCOIN;
+    }
+
 }
 
 

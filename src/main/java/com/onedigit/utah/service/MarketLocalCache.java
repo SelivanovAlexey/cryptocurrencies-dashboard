@@ -13,13 +13,14 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 //TODO: check chain networks availability to deposit and withdraw
 @Service
 public class MarketLocalCache {
 
-    private static final Map<String, CoinDTO> coinMap = new HashMap<>();
+    private static final Map<String, CoinDTO> coinMap = new ConcurrentHashMap<>();
 
     //TODO: костыль сука бесит
     @Autowired
@@ -48,11 +49,12 @@ public class MarketLocalCache {
         return resultList.stream().filter(coindto -> !coindto.getSpreads().isEmpty()).collect(Collectors.toList());
     }
 
-    public static List<SpreadDTO> calculateSpreads(Map<Exchange, BigDecimal> map) {
+    public static List<SpreadDTO> calculateSpreads(TickerInfoMap map) {
         List<SpreadDTO> spreads = new ArrayList<>();
         for (Map.Entry<Exchange, BigDecimal> entry : map.entrySet()) {
             Exchange exchange = entry.getKey();
             BigDecimal price = entry.getValue();
+            if (price.compareTo(BigDecimal.ZERO) == 0) continue;
             for (Map.Entry<Exchange, BigDecimal> innerEntry : map.entrySet()) {
                 Exchange cExchange = innerEntry.getKey();
                 if (exchange.equals(cExchange)) continue;
@@ -67,7 +69,7 @@ public class MarketLocalCache {
     }
 
     private static void fillSpreads(CoinDTO coin) {
-        coin.setSpreads(calculateSpreads(coin.getPriceToExchange()));
+        coin.setSpreads(calculateSpreads((TickerInfoMap) coin.getPriceToExchange()));
     }
 
     private static CoinDTO getTickerInfo(String ticker) {
@@ -109,9 +111,11 @@ public class MarketLocalCache {
             BigDecimal price = this.get(key);
             if (!value.equals(price)) {
                 price = super.put(key, value);
-                CoinDTO coinUpdate = prepareResponse(key, value);
-                if (!coinUpdate.getSpreads().isEmpty())
-                    PriceChangeEventProcessor.publish(coinUpdate);
+                if (PriceChangeEventProcessor.getListener() != null) {
+                    CoinDTO coinUpdate = prepareResponse(key, value);
+                    if (!coinUpdate.getSpreads().isEmpty())
+                        PriceChangeEventProcessor.publish(coinUpdate);
+                }
             }
             return price;
         }

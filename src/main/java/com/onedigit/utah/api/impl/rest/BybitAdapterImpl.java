@@ -1,4 +1,4 @@
-package com.onedigit.utah.api.impl;
+package com.onedigit.utah.api.impl.rest;
 
 import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
@@ -21,24 +21,22 @@ import static com.onedigit.utah.constants.ApiConstants.*;
  */
 @Slf4j
 @Service
-public class BybitAdapterImpl implements ExchangeAdapter {
+public class BybitAdapterImpl extends ExchangeAdapter {
 
     private final WebClient bybitRestApiClient;
+
+    private Boolean isConnectionActive = false;
 
     public BybitAdapterImpl(@Qualifier("bybitRestApiClient") WebClient bybitRestApiClient) {
         this.bybitRestApiClient = bybitRestApiClient;
     }
 
-    @Override
-    public Mono<Void> getMarketData() {
-        log.info("Started getMarketData from bybit");
-        return getAllTickers();
-    }
-
     /**
      * Retrieves only -USDT tickers
      */
-    private Mono<Void> getAllTickers() {
+    @Override
+    public Mono<Void> getMarketData() {
+        log.info("Started getMarketData from bybit");
         return bybitRestApiClient
                 .get()
                 .uri(uruBuilder ->
@@ -49,12 +47,17 @@ public class BybitAdapterImpl implements ExchangeAdapter {
                 .retrieve()
                 .bodyToMono(BybitRestResponse.class)
                 .map(response -> {
-                    log.debug("Response: {}", response);
+                    if (!isConnectionActive) isConnectionActive = true;
                     return response;
                 })
                 .delaySubscription(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS))
                 .repeat()
-                .map(this::storeTickersData).then();
+                .map(this::storeTickersData)
+                .doOnError(error -> {
+                    log.error("Error during communication with server:", error);
+                    isConnectionActive = false;
+                })
+                .then();
     }
 
     private BybitRestResponse storeTickersData(BybitRestResponse response) {
@@ -64,9 +67,24 @@ public class BybitAdapterImpl implements ExchangeAdapter {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(ticker.getLastPrice());
 
-                    MarketLocalCache.put(tt, Exchange.BYBIT, price);
+                    MarketLocalCache.put(tt, getExchangeName(), price);
 
                 });
         return response;
+    }
+
+    @Override
+    public Boolean isEnabled() {
+        return true;
+    }
+
+    @Override
+    public Boolean isConnectionActive() {
+        return isConnectionActive;
+    }
+
+    @Override
+    public Exchange getExchangeName() {
+        return Exchange.BYBIT;
     }
 }

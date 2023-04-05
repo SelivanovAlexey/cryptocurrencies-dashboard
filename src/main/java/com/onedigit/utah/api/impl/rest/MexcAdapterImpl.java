@@ -1,4 +1,4 @@
-package com.onedigit.utah.api.impl;
+package com.onedigit.utah.api.impl.rest;
 
 import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
@@ -22,7 +22,10 @@ import static com.onedigit.utah.constants.ApiConstants.*;
  */
 @Slf4j
 @Service
-public class MexcAdapterImpl implements ExchangeAdapter {
+public class MexcAdapterImpl extends ExchangeAdapter {
+
+    private Boolean isConnectionActive = false;
+
     private final WebClient mexcRestApiClient;
 
     public MexcAdapterImpl(WebClient mexcRestApiClient) {
@@ -41,12 +44,17 @@ public class MexcAdapterImpl implements ExchangeAdapter {
                 .retrieve()
                 .bodyToMono(MexcRestResponse[].class)
                 .map(response -> {
-                    log.debug("Response: {}", Arrays.toString(response));
+                    if (!isConnectionActive) isConnectionActive = true;
                     return response;
                 })
                 .delaySubscription(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS))
                 .repeat()
-                .map(this::storeTickersData).then();
+                .map(this::storeTickersData)
+                .doOnError(error -> {
+                            log.error("Error during communication with server:", error);
+                            isConnectionActive = false;
+                        }
+                ).then();
     }
 
     private MexcRestResponse[] storeTickersData(MexcRestResponse[] response) {
@@ -59,5 +67,20 @@ public class MexcAdapterImpl implements ExchangeAdapter {
                     MarketLocalCache.put(tt, Exchange.MEXC, price);
                 });
         return response;
+    }
+
+    @Override
+    public Boolean isEnabled() {
+        return true;
+    }
+
+    @Override
+    public Boolean isConnectionActive() {
+        return isConnectionActive;
+    }
+
+    @Override
+    public Exchange getExchangeName() {
+        return Exchange.MEXC;
     }
 }
