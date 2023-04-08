@@ -1,6 +1,7 @@
 package com.onedigit.utah.api.impl.rest;
 
-import com.onedigit.utah.api.ExchangeAdapter;
+import com.onedigit.utah.api.impl.BaseExchangeAdapter;
+import com.onedigit.utah.model.Connection;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.api.bybit.rest.BybitRestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
@@ -12,7 +13,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
@@ -21,14 +23,10 @@ import static com.onedigit.utah.constants.ApiConstants.*;
  */
 @Slf4j
 @Service
-public class BybitAdapterImpl extends ExchangeAdapter {
-
-    private final WebClient bybitRestApiClient;
-
-    private Boolean isConnectionActive = false;
+public class BybitAdapterImpl extends BaseExchangeAdapter {
 
     public BybitAdapterImpl(@Qualifier("bybitRestApiClient") WebClient bybitRestApiClient) {
-        this.bybitRestApiClient = bybitRestApiClient;
+        this.webClient = bybitRestApiClient;
     }
 
     /**
@@ -37,26 +35,14 @@ public class BybitAdapterImpl extends ExchangeAdapter {
     @Override
     public Mono<Void> getMarketData() {
         log.info("Started getMarketData from bybit");
-        return bybitRestApiClient
-                .get()
-                .uri(uruBuilder ->
-                        uruBuilder
-                                .path(BYBIT_API_REST_GET_TICKERS)
-                                .queryParam("category", "spot")
-                                .build())
-                .retrieve()
-                .bodyToMono(BybitRestResponse.class)
-                .map(response -> {
-                    if (!isConnectionActive) isConnectionActive = true;
-                    return response;
-                })
-                .delaySubscription(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS))
-                .repeat()
-                .map(this::storeTickersData)
+        return get(BYBIT_API_REST_GET_TICKERS, Map.of("category", List.of("spot")), BybitRestResponse.class)
                 .doOnError(error -> {
                     log.error("Error during communication with server:", error);
-                    isConnectionActive = false;
+                    setConnectionStatus(Connection.INACTIVE);
                 })
+                .doOnNext(response -> setConnectionStatus(Connection.ACTIVE))
+                .map(this::storeTickersData)
+                .repeat()
                 .then();
     }
 
@@ -76,11 +62,6 @@ public class BybitAdapterImpl extends ExchangeAdapter {
     @Override
     public Boolean isEnabled() {
         return true;
-    }
-
-    @Override
-    public Boolean isConnectionActive() {
-        return isConnectionActive;
     }
 
     @Override

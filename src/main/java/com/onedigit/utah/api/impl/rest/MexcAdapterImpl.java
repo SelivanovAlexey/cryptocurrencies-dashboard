@@ -1,6 +1,7 @@
 package com.onedigit.utah.api.impl.rest;
 
-import com.onedigit.utah.api.ExchangeAdapter;
+import com.onedigit.utah.api.impl.BaseExchangeAdapter;
+import com.onedigit.utah.model.Connection;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.api.mexc.rest.MexcRestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
@@ -11,7 +12,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.Arrays;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
@@ -22,39 +22,25 @@ import static com.onedigit.utah.constants.ApiConstants.*;
  */
 @Slf4j
 @Service
-public class MexcAdapterImpl extends ExchangeAdapter {
-
-    private Boolean isConnectionActive = false;
-
-    private final WebClient mexcRestApiClient;
+public class MexcAdapterImpl extends BaseExchangeAdapter {
 
     public MexcAdapterImpl(WebClient mexcRestApiClient) {
-        this.mexcRestApiClient = mexcRestApiClient;
+        this.webClient = mexcRestApiClient;
     }
 
     @Override
     public Mono<Void> getMarketData() {
         log.info("Started getMarketData from mexc");
-        return mexcRestApiClient
-                .get()
-                .uri(uruBuilder ->
-                        uruBuilder
-                                .path(MEXC_API_REST_GET_TICKERS)
-                                .build())
-                .retrieve()
-                .bodyToMono(MexcRestResponse[].class)
-                .map(response -> {
-                    if (!isConnectionActive) isConnectionActive = true;
-                    return response;
-                })
-                .delaySubscription(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS))
-                .repeat()
-                .map(this::storeTickersData)
+        return get(MEXC_API_REST_GET_TICKERS, MexcRestResponse[].class)
                 .doOnError(error -> {
-                            log.error("Error during communication with server:", error);
-                            isConnectionActive = false;
-                        }
-                ).then();
+                    log.error("Error during communication with server:", error);
+                    setConnectionStatus(Connection.INACTIVE);
+                })
+                .doOnNext(response -> setConnectionStatus(Connection.ACTIVE))
+                .map(this::storeTickersData)
+                .repeat()
+                .then();
+
     }
 
     private MexcRestResponse[] storeTickersData(MexcRestResponse[] response) {
@@ -72,11 +58,6 @@ public class MexcAdapterImpl extends ExchangeAdapter {
     @Override
     public Boolean isEnabled() {
         return true;
-    }
-
-    @Override
-    public Boolean isConnectionActive() {
-        return isConnectionActive;
     }
 
     @Override

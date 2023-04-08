@@ -2,7 +2,8 @@ package com.onedigit.utah.api.impl.ws;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onedigit.utah.api.ExchangeAdapter;
+import com.onedigit.utah.api.impl.BaseExchangeAdapter;
+import com.onedigit.utah.model.Connection;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.api.kucoin.rest.KucoinRestData;
 import com.onedigit.utah.model.api.kucoin.rest.KucoinRestInstanceServer;
@@ -33,16 +34,15 @@ import static com.onedigit.utah.constants.ApiConstants.*;
  */
 @Slf4j
 @Service
-public class KucoinAdapterImpl extends ExchangeAdapter {
+public class KucoinAdapterImpl extends BaseExchangeAdapter {
     private final WebSocketClient webSocketClient;
-    private final WebClient kucoinRestApiClient;
     private final ObjectMapper mapper;
     private WebSocketSession session;
 
     public KucoinAdapterImpl(@Qualifier("webSocketClient") WebSocketClient webSocketClient,
                              @Qualifier("kucoinRestApiClient") WebClient kucoinRestApiClient, ObjectMapper mapper) {
         this.webSocketClient = webSocketClient;
-        this.kucoinRestApiClient = kucoinRestApiClient;
+        this.webClient = kucoinRestApiClient;
         this.mapper = mapper;
     }
 
@@ -114,10 +114,7 @@ public class KucoinAdapterImpl extends ExchangeAdapter {
 
 
     private KucoinRestResponse getConnectToken() {
-        return kucoinRestApiClient
-                .post()
-                .uri(URI.create(KUCOIN_API_REST_BASE_URL + KUCOIN_API_REST_GET_CONNECT_TOKEN_URL))
-                .retrieve().bodyToMono(KucoinRestResponse.class).block();
+        return post(KUCOIN_API_REST_GET_CONNECT_TOKEN_URL, KucoinRestResponse.class).block();
     }
 
     private String getEndpointFromConnectTokenResponse(KucoinRestResponse response) throws Exception {
@@ -158,8 +155,8 @@ public class KucoinAdapterImpl extends ExchangeAdapter {
     }
 
     @Override
-    public Boolean isConnectionActive() {
-        return session != null && session.isOpen();
+    public Connection getConnectionStatus() {
+        return session != null && session.isOpen() ? Connection.ACTIVE : Connection.INACTIVE;
     }
 
     @Override

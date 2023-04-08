@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 /**
  * Implemented with WebSocket protocol
  */
-public class GateAdapterImpl extends ExchangeAdapter {
+public class GateAdapterImpl implements ExchangeAdapter {
     @Override
     public Mono<Void> getMarketData() {
         return null;
@@ -16,11 +16,6 @@ public class GateAdapterImpl extends ExchangeAdapter {
     @Override
     public Boolean isEnabled() {
         return false;
-    }
-
-    @Override
-    public Boolean isConnectionActive() {
-        return null;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.onedigit.utah.lifecycle;
 
 import com.onedigit.utah.api.ExchangeAdapter;
+import com.onedigit.utah.api.impl.BaseExchangeAdapter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,9 +12,9 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class HealthCheckService {
-    final List<ExchangeAdapter> activeProviders;
+    final List<BaseExchangeAdapter> activeProviders;
 
-    public HealthCheckService(List<ExchangeAdapter> providers) {
+    public HealthCheckService(List<BaseExchangeAdapter> providers) {
         this.activeProviders = providers.stream().filter(ExchangeAdapter::isEnabled).collect(Collectors.toList());
     }
 
@@ -21,7 +22,7 @@ public class HealthCheckService {
     public void checkHealth() {
         activeProviders.
                 forEach(prov ->
-                        log.info("Healthcheck :: exchange {}, connection :: {}", prov.getExchangeName(), prov.isConnectionActive() ? "active" : "inactive")
+                        log.info("Healthcheck :: exchange {}, connection :: {}", prov.getExchangeName(), prov.getConnectionStatus())
                 );
     }
 }

@@ -3,13 +3,12 @@ package com.onedigit.utah.api;
 import com.onedigit.utah.model.Exchange;
 import reactor.core.publisher.Mono;
 
-public abstract class ExchangeAdapter {
+//TODO: refactor API error handling
+public interface ExchangeAdapter {
 
-    public abstract Mono<Void> getMarketData();
+    Mono<Void> getMarketData();
 
-    public abstract Boolean isEnabled();
+    Boolean isEnabled();
 
-    public abstract Boolean isConnectionActive();
-
-    public abstract Exchange getExchangeName();
+    Exchange getExchangeName();
 }
