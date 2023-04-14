@@ -18,7 +18,7 @@ public class HealthCheckService {
         this.activeProviders = providers.stream().filter(ExchangeAdapter::isEnabled).collect(Collectors.toList());
     }
 
-    @Scheduled(fixedRate = 120000)
+    @Scheduled(fixedRateString = "#{T(com.onedigit.utah.constants.ApiConstants).HEALTHCHECK_INTERVAL_MS}")
     public void checkHealth() {
         activeProviders.
                 forEach(prov ->

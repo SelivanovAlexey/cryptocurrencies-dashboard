@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -29,21 +28,18 @@ public class MexcAdapterImpl extends BaseExchangeAdapter {
     }
 
     @Override
-    public Mono<Void> getMarketData() {
-        log.info("Started getMarketData from mexc");
-        return get(MEXC_API_REST_GET_TICKERS, MexcRestResponse[].class)
-                .doOnError(error -> {
-                    log.error("Error during communication with server:", error);
-                    setConnectionStatus(Connection.INACTIVE);
-                })
-                .doOnNext(response -> setConnectionStatus(Connection.ACTIVE))
-                .map(this::storeTickersData)
+    public void getMarketData() {
+        log.info("Initiate getMarketData call from mexc");
+        get(MEXC_API_REST_GET_TICKERS, MexcRestResponse[].class)
                 .repeat()
-                .then();
-
+                .retryWhen(exchangeApiRetrySpec(log))
+                .subscribe(response -> {
+                    storeTickersData(response);
+                    setConnectionStatus(Connection.ACTIVE);
+                });
     }
 
-    private MexcRestResponse[] storeTickersData(MexcRestResponse[] response) {
+    private void storeTickersData(MexcRestResponse[] response) {
         Arrays.stream(response)
                 .filter(resp -> StringUtils.endsWith(resp.getSymbol(), "USDT"))
                 .forEach(resp -> {
@@ -52,7 +48,6 @@ public class MexcAdapterImpl extends BaseExchangeAdapter {
 
                     MarketLocalCache.put(tt, Exchange.MEXC, price);
                 });
-        return response;
     }
 
     @Override

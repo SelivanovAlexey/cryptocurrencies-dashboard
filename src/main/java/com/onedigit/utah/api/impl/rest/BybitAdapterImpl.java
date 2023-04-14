@@ -10,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -33,20 +32,18 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
      * Retrieves only -USDT tickers
      */
     @Override
-    public Mono<Void> getMarketData() {
-        log.info("Started getMarketData from bybit");
-        return get(BYBIT_API_REST_GET_TICKERS, Map.of("category", List.of("spot")), BybitRestResponse.class)
-                .doOnError(error -> {
-                    log.error("Error during communication with server:", error);
-                    setConnectionStatus(Connection.INACTIVE);
-                })
-                .doOnNext(response -> setConnectionStatus(Connection.ACTIVE))
-                .map(this::storeTickersData)
+    public void getMarketData() {
+        log.info("Initiate getMarketData call from bybit");
+        get(BYBIT_API_REST_GET_TICKERS, Map.of("category", List.of("spot")), BybitRestResponse.class)
                 .repeat()
-                .then();
+                .retryWhen(exchangeApiRetrySpec(log))
+                .subscribe(response -> {
+                    storeTickersData(response);
+                    setConnectionStatus(Connection.ACTIVE);
+                });
     }
 
-    private BybitRestResponse storeTickersData(BybitRestResponse response) {
+    private void storeTickersData(BybitRestResponse response) {
         response.getResult().getTickers().stream()
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "USDT"))
                 .forEach(ticker -> {
@@ -56,7 +53,6 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
                     MarketLocalCache.put(tt, getExchangeName(), price);
 
                 });
-        return response;
     }
 
     @Override

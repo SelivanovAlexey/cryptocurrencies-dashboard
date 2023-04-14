@@ -9,6 +9,8 @@ public interface ApiConstants {
     //TODO: to remove when implement ws approach
     Integer REST_API_CALLS_FREQUENCY_MS = 0;
 
+    Long HEALTHCHECK_INTERVAL_MS = 120000L;
+
     /**
      * KUCOIN EXCHANGE REGION
      */

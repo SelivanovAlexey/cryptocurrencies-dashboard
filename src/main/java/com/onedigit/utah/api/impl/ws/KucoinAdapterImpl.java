@@ -1,6 +1,5 @@
 package com.onedigit.utah.api.impl.ws;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onedigit.utah.api.impl.BaseExchangeAdapter;
 import com.onedigit.utah.model.Connection;
@@ -10,6 +9,7 @@ import com.onedigit.utah.model.api.kucoin.rest.KucoinRestInstanceServer;
 import com.onedigit.utah.model.api.kucoin.rest.KucoinRestResponse;
 import com.onedigit.utah.model.api.kucoin.ws.KucoinWsMessage;
 import com.onedigit.utah.service.MarketLocalCache;
+import com.onedigit.utah.util.CommonUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
@@ -38,6 +39,9 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
     private final WebSocketClient webSocketClient;
     private final ObjectMapper mapper;
     private WebSocketSession session;
+    private String subscribeMessage;
+    private String pingMessage;
+
 
     public KucoinAdapterImpl(@Qualifier("webSocketClient") WebSocketClient webSocketClient,
                              @Qualifier("kucoinRestApiClient") WebClient kucoinRestApiClient, ObjectMapper mapper) {
@@ -48,7 +52,7 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
 
     @Override
     @SneakyThrows
-    public Mono<Void> getMarketData() {
+    public void getMarketData() {
         log.info("Started getMarkedData from kucoin");
         KucoinRestResponse tokenResponse = getConnectToken();
         String endpoint = getEndpointFromConnectTokenResponse(tokenResponse);
@@ -57,61 +61,53 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
         log.debug("getConnectToken info: {}", tokenResponse);
 
         //TODO: to refactor with handle method and generalize
-        return webSocketClient.execute(
-                URI.create(endpoint + "?token=" + token),
+        webSocketClient.execute(
+                URI.create(endpoint + "?token=" + token + "&connectId=" + UUID.randomUUID()),
                 session -> {
                     this.session = session;
                     Mono<Void> mainFlow = session.receive()
-                            .map(WebSocketMessage::getPayloadAsText)
-                            .map(payload -> {
+                            .flatMap(msg -> {
                                 //TODO: to replace with general error handling
                                 try {
-                                    return mapper.readValue(payload, KucoinWsMessage.class);
-                                } catch (JsonProcessingException e) {
-                                    throw new RuntimeException(e);
+                                    String payload = msg.getPayloadAsText();
+                                    KucoinWsMessage message = mapper.readValue(payload, KucoinWsMessage.class);
+                                    return handleKucoinResponse(message, session);
+                                } catch (Exception e) {
+                                    log.error("unexpected exception in kucoin flux", e);
+                                    return Flux.error(e);
                                 }
                             })
-                            .flatMap(message -> {
-                                if (message.getType().equals("welcome")) {
-                                    log.debug("Received welcome message: {}", message.asJsonString());
-                                    return session.send(Mono.just(session.textMessage(buildSubscribeMessage(KUCOIN_TOPIC_MARKET_DATA))));
-                                }
-                                if (message.getType().equals("message")) {
-                                    if (message.getSubject().endsWith("USDT")) {
-                                        String ticker = StringUtils.substringBefore(message.getSubject(), "-USDT");
-                                        BigDecimal price = new BigDecimal(message.getData().getPrice());
-
-                                        MarketLocalCache.put(ticker, getExchangeName(), price);
-
-                                    }
-                                    return session.send(Mono.empty());
-                                }
-                                if (message.getType().equals("pong")) {
-                                    log.debug("Received pong: {}", message.asJsonString());
-                                    return session.send(Mono.empty());
-                                }
-                                return session.send(Mono.empty());
-                            })
-                            .doOnError(error ->
-                                    log.error("Error during websocket session with id:" + session.getId(), error)
-                            )
-                            .doOnCancel(() ->
-                                    log.info("Connection " + session.getId() + " interrupted")
-                            )
                             .then();
-
-                    String pingMessage = KucoinWsMessage.builder()
-                            .type("ping")
-                            .build().asJsonString();
 
                     Mono<Void> pingFlow = session.send(Flux.interval(Duration.ofMillis(pingInterval)).flatMap(interval -> {
                         log.debug("Send ping: {}", pingMessage);
                         return Mono.just(session.textMessage(pingMessage));
                     }));
-                    return Mono.zip(mainFlow, pingFlow).then();
-                });
+                    return Flux.merge(mainFlow, pingFlow).then();
+                }).retryWhen(exchangeApiRetrySpec(log)).subscribe();
     }
 
+    private Mono<Void> handleKucoinResponse(KucoinWsMessage response, WebSocketSession session) {
+        Mono<WebSocketMessage> sessionResponse = Mono.empty();
+        switch (MessageTypes.valueOf(response.getType().toUpperCase())) {
+            case WELCOME -> {
+                log.debug("Received welcome message: {}", response.asJsonString());
+                subscribeMessage = CommonUtils.buildKucoinSubscribeMessage(response.getId(),
+                        KUCOIN_TOPIC_MARKET_DATA);
+                pingMessage = CommonUtils.buildKucoinPingMessage(response.getId());
+                sessionResponse = Mono.just(session.textMessage(subscribeMessage));
+            }
+            case MESSAGE -> {
+                if (response.getSubject().endsWith("USDT")) {
+                    String ticker = StringUtils.substringBefore(response.getSubject(), "-USDT");
+                    BigDecimal price = new BigDecimal(response.getData().getPrice());
+                    MarketLocalCache.put(ticker, getExchangeName(), price);
+                }
+            }
+            case PONG -> log.debug("Received pong: {}", response.asJsonString());
+        }
+        return session.send(sessionResponse);
+    }
 
     private KucoinRestResponse getConnectToken() {
         return post(KUCOIN_API_REST_GET_CONNECT_TOKEN_URL, KucoinRestResponse.class).block();
@@ -142,14 +138,6 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
                 .orElseThrow(() -> new Exception("No endpoint was received from Connect Token response"));
     }
 
-    private String buildSubscribeMessage(String topic) {
-        return
-                KucoinWsMessage.builder()
-                        .topic(topic)
-                        .type("subscribe")
-                        .build().asJsonString();
-    }
-
     public Boolean isEnabled() {
         return true;
     }
@@ -157,11 +145,16 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
     @Override
     public Connection getConnectionStatus() {
         return session != null && session.isOpen() ? Connection.ACTIVE : Connection.INACTIVE;
+
     }
 
     @Override
     public Exchange getExchangeName() {
         return Exchange.KUCOIN;
+    }
+
+    enum MessageTypes {
+        WELCOME, MESSAGE, PONG
     }
 
 }

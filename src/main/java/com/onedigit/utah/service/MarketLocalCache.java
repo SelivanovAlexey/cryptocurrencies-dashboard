@@ -113,7 +113,7 @@ public class MarketLocalCache {
                 price = super.put(key, value);
                 if (PriceChangeEventProcessor.getListener() != null) {
                     CoinDTO coinUpdate = prepareResponse(key, value);
-                    if (!coinUpdate.getSpreads().isEmpty())
+//                    if (!coinUpdate.getSpreads().isEmpty())
                         PriceChangeEventProcessor.publish(coinUpdate);
                 }
             }
