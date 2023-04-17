@@ -15,6 +15,7 @@ public interface ApiConstants {
      * KUCOIN EXCHANGE REGION
      */
     String KUCOIN_API_REST_BASE_URL = "https://api.kucoin.com";
+    String KUCOIN_API_REST_GET_TICKERS = "/api/v1/market/allTickers";
     String KUCOIN_API_REST_GET_CONNECT_TOKEN_URL = "/api/v1/bullet-public";
     String KUCOIN_API_WS_SPOT_URL = "wss://stream.bybit.com/v5/public/spot";
     String KUCOIN_TOPIC_MARKET_DATA = "/market/ticker:all";

@@ -2,13 +2,18 @@ package com.onedigit.utah.api.impl.rest;
 
 import com.onedigit.utah.api.impl.BaseExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
+import com.onedigit.utah.model.api.common.RestResponse;
+import reactor.core.publisher.Flux;
 
-/**
- * Implemented with REST protocol
- */
 public class HuobiAdapterImpl extends BaseExchangeAdapter {
     @Override
-    public void getMarketData() {
+    public Flux<? extends RestResponse> watchMarketData() {
+        return null;
+    }
+
+    @Override
+    public void storeMarketData(RestResponse response) {
+
     }
 
     @Override
