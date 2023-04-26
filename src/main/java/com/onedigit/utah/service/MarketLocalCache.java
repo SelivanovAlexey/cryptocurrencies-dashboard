@@ -123,7 +123,7 @@ public class MarketLocalCache {
         private CoinDTO prepareResponse(Exchange exchange, BigDecimal price) {
             TickerInfoMap cachedMap = new TickerInfoMap(this, ticker);
             List<SpreadDTO> spreads = MarketLocalCache.calculateSpreads(cachedMap);
-            return new CoinDTO(ticker, Map.of(exchange, price), spreads);
+            return new CoinDTO(ticker, null, spreads);
         }
     }
 }

@@ -32,6 +32,7 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
         return getWithRepeat(KUCOIN_API_REST_GET_TICKERS, KucoinRestResponse.class, exchangeApiRetrySpec(log));
     }
 
+    //TODO: possible null last price. check in all adapters
     public void storeMarketData(RestResponse response) {
         ((KucoinRestResponse) response).getData().getTickerList().stream()
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "-USDT"))
