@@ -1,23 +1,29 @@
 package com.onedigit.utah.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
 @Data
-@RequiredArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include. NON_NULL)
 public class CoinDTO {
-    @NonNull
     private String ticker;
-    @NonNull
     private Map<Exchange, BigDecimal> priceToExchange;
     private List<SpreadDTO> spreads;
+
+    public CoinDTO(@NonNull String ticker, Map<Exchange, BigDecimal> priceToExchange) {
+        this.ticker = ticker;
+        this.priceToExchange = priceToExchange;
+    }
+
+    public CoinDTO(@NonNull String ticker, List<SpreadDTO> spreads) {
+        this.ticker = ticker;
+        this.spreads = spreads;
+    }
 }

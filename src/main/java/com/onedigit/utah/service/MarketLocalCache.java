@@ -3,6 +3,7 @@ package com.onedigit.utah.service;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.SpreadDTO;
 import com.onedigit.utah.model.CoinDTO;
+import com.onedigit.utah.model.view.SpreadView;
 import com.onedigit.utah.service.event.PriceChangeEventProcessor;
 
 import com.onedigit.utah.util.PropertiesProvider;
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 //TODO: check chain networks availability to deposit and withdraw
+//TODO: test copy of coin map array
 @Service
 public class MarketLocalCache {
 
@@ -28,11 +30,21 @@ public class MarketLocalCache {
 
     private static PropertiesProvider propertiesProvider;
 
+    private static String tickerWithRequestedPrice;
+
     public static void put(String ticker, Exchange exchange, BigDecimal price) {
         CoinDTO dto = getTickerInfo(ticker);
         if (dto != null) {
             dto.getPriceToExchange().put(exchange, price);
         }
+    }
+
+    public static void enablePriceForTicker(String ticker) {
+        tickerWithRequestedPrice = ticker;
+    }
+
+    public static void disablePriceForTicker(String ticker) {
+        tickerWithRequestedPrice = null;
     }
 
     @PostConstruct
@@ -46,7 +58,10 @@ public class MarketLocalCache {
     public static List<CoinDTO> getAllExchangesData() {
         List<CoinDTO> resultList = new ArrayList<>(coinMap.values());
         resultList.forEach(MarketLocalCache::fillSpreads);
-        return resultList.stream().filter(coindto -> !coindto.getSpreads().isEmpty()).collect(Collectors.toList());
+        resultList = resultList.stream().filter(coindto -> !coindto.getSpreads().isEmpty())
+                .map(coinDTO -> new SpreadView(coinDTO.getTicker(), coinDTO.getSpreads()))
+                .collect(Collectors.toList());
+        return resultList;
     }
 
     public static List<SpreadDTO> calculateSpreads(TickerInfoMap map) {
@@ -72,7 +87,7 @@ public class MarketLocalCache {
         coin.setSpreads(calculateSpreads((TickerInfoMap) coin.getPriceToExchange()));
     }
 
-    private static CoinDTO getTickerInfo(String ticker) {
+    public static CoinDTO getTickerInfo(String ticker) {
         CoinDTO ti = coinMap.get(ticker);
         if (ti == null && putCondition(ticker)) {
             ti = new CoinDTO(ticker, new TickerInfoMap(ticker));
@@ -94,6 +109,10 @@ public class MarketLocalCache {
         return condition;
     }
 
+    public static boolean isTickerExists(String ticker) {
+        return coinMap.containsKey(ticker);
+    }
+
     static class TickerInfoMap extends HashMap<Exchange, BigDecimal> {
         private final String ticker;
 
@@ -113,7 +132,7 @@ public class MarketLocalCache {
                 price = super.put(key, value);
                 if (PriceChangeEventProcessor.getListener() != null) {
                     CoinDTO coinUpdate = prepareResponse(key, value);
-//                    if (!coinUpdate.getSpreads().isEmpty())
+                    if (!coinUpdate.getSpreads().isEmpty())
                         PriceChangeEventProcessor.publish(coinUpdate);
                 }
             }
@@ -123,7 +142,13 @@ public class MarketLocalCache {
         private CoinDTO prepareResponse(Exchange exchange, BigDecimal price) {
             TickerInfoMap cachedMap = new TickerInfoMap(this, ticker);
             List<SpreadDTO> spreads = MarketLocalCache.calculateSpreads(cachedMap);
-            return new CoinDTO(ticker, Map.of(exchange, price), spreads);
+            CoinDTO resultCoin;
+            if (ticker.equals(tickerWithRequestedPrice)) {
+                resultCoin = new CoinDTO(ticker, Map.of(exchange, price), spreads);
+            } else {
+                resultCoin = new CoinDTO(ticker, spreads);
+            }
+            return resultCoin;
         }
     }
 }

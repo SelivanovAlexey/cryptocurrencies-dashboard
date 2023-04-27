@@ -13,11 +13,11 @@ function createRow(ticker) {
     let tickerCell = document.createElement("td")
     tickerCell.classList.add("col-ticker")
     row.appendChild(tickerCell)
-    for (const ex of exchanges) {
-        let cell = document.createElement("td")
-        cell.classList.add("col-" + ex)
-        row.appendChild(cell)
-    }
+    // for (const ex of exchanges) {
+    //     let cell = document.createElement("td")
+    //     cell.classList.add("col-" + ex)
+    //     row.appendChild(cell)
+    // }
 
     let spreadTable = createSpreadTable(ticker)
     row.appendChild(spreadTable)
@@ -27,10 +27,10 @@ function createRow(ticker) {
 }
 
 function setRowData(row, ticker, priceToExchange, spreads) {
-    Object.entries(priceToExchange).forEach((entry) => {
-        const [exchange, price] = entry
-        row.getElementsByClassName("col-" + exchange).item(0).textContent = price.noExponents()
-    })
+    // Object.entries(priceToExchange).forEach((entry) => {
+    //     const [exchange, price] = entry
+    //     row.getElementsByClassName("col-" + exchange).item(0).textContent = price.noExponents()
+    // })
     spreads.forEach((elem, index) => {
         let cell = row.getElementsByClassName("spread-row").item(0).cells[index]
         cell.getElementsByClassName("p-diff").item(0).textContent = elem.diff
