@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
+//TODO: implement rest calls for availability
 @Slf4j
 @Service
 public class KucoinAdapterImpl extends BaseExchangeAdapter {

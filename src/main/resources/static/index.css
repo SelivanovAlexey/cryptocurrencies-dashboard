@@ -15,6 +15,14 @@
     border-collapse: collapse;
 }
 
+.vertical-header{
+    background-color: #ffffff;
+    color: #000000;
+    text-align: center;
+    border-collapse: collapse;
+    font-weight: bold;
+}
+
 .styled-table th,
 .styled-table td:not(.td-spread-details):not(.col-spread) {
     padding: 12px 15px;
@@ -29,22 +37,40 @@
     border-bottom: 2px solid #009879;
 }
 
+.content {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    /*align-items: center;*/
+}
+
+.placeholder{
+    min-width: 400px;
+    margin-right: auto;
+    visibility: hidden;
+}
+
+.ticker-spread-info {
+    display: flex;
+    position: sticky;
+    top: 10px;
+    margin-left: auto;
+    width: max-content;
+    height: max-content;
+}
+
 .table-container {
     display: flex;
     justify-content: center;
     gap: 200px;
 }
 
-.column-price {
-    width: 10vh;
-}
-
 .column-ticker {
-    width: 5vh;
+    width: 50%;
 }
 
 .column-spreads {
-    width: max-content;
+    width: 50%;
 }
 
 .spread-details p {
@@ -78,9 +104,28 @@
 .col-spread {
     width: 33%;
     padding: 4px 2px;
+    cursor: pointer;
+}
+
+.col-spread:hover {
+    /*filter: contrast(150%);*/
+    background-color: #cccccc;
+    transition: all 0.15s ease-in;
 }
 
 .td-spread-details {
     padding: 0;
     border-collapse: collapse;
+}
+
+.spread-cell-ok{
+    background-color: #F6D892;
+}
+
+.spread-cell-perfect{
+    background-color: #8DB590;
+}
+
+.spread-cell-default{
+    background-color: white;
 }

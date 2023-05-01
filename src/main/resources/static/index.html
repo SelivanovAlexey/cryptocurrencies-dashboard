@@ -6,22 +6,66 @@
     <title>Test</title>
 </head>
 <body>
-<div class="table-container">
-    <table class="styled-table" id="price-table">
-        <thead>
-        <tr>
-            <th class="column-ticker">Ticker</th>
-            <th class="column-spreads">Best spreads</th>
-        </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+<div class="content">
+    <div class="placeholder"></div>
+    <div class="table-container">
+        <table class="styled-table" id="price-table">
+            <thead>
+            <tr>
+                <th class="column-ticker">Ticker</th>
+                <th class="column-spreads">Best spreads (%)</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+<!--    TODO: make correct positioning-->
+<!--    TODO: make clickable spreads-->
+<!--    TODO: freeze columns-->
+    <div class="ticker-spread-info">
+        <div style="margin: 25px 0" class="ticker-spread-info-details">
+            <p style="margin-top: 0" class="spread-ticker">
+                <!--    TODO: make USDT prefix-->
+                <span id="info-ticker" style="font-family: sans-serif; font-size: 1.7em; margin-left: 10px"></span>
+<!--                <span style="font-family: sans-serif; font-size: 1.7em; margin-left: 10px">/USDT</span>-->
+            </p>
+            <p>
+                <span id="info-spread" class="spread-value" style="font-family: sans-serif; font-size: 1.7em; margin-left: 10px"></span>
+            </p>
+            <table class="styled-table" id="info-table">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Exchange</th>
+                    <th>Price</th>
+                    <th>Availability</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!--    TODO: make link to exchange-->
+                <tr>
+                    <td class="vertical-header">Buy</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="vertical-header">Sell</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
 
 </body>
 <script src="index.js"></script>
-<script type="text/JavaScript" src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js">
-</script>
+<script type="text/JavaScript" src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+<script type="text/JavaScript" src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </html>
 

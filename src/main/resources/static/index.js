@@ -1,7 +1,15 @@
 let eventSource;
-
+//TODO: add sticky header
 const priceTable = document.getElementById("price-table").getElementsByTagName('tbody')[0]
+const infoTable = document.getElementById("info-table").getElementsByTagName('tbody')[0]
 const exchanges = ["KUCOIN", "BYBIT", "MEXC", "BINANCE", "GATE", "HUOBI"]
+
+let selectedSpreadTarget
+
+document.querySelectorAll(".col-spread").forEach((node) => {
+    node.onmouseover = getTickerInfoMouseOverEvent
+    node.onMouseout = getTickerInfoMouseOutEvent
+})
 
 window.onload =
     () => {
@@ -12,12 +20,8 @@ function createRow(ticker) {
     let row = document.createElement("tr")
     let tickerCell = document.createElement("td")
     tickerCell.classList.add("col-ticker")
+    row.classList.add("ticker-row")
     row.appendChild(tickerCell)
-    // for (const ex of exchanges) {
-    //     let cell = document.createElement("td")
-    //     cell.classList.add("col-" + ex)
-    //     row.appendChild(cell)
-    // }
 
     let spreadTable = createSpreadTable(ticker)
     row.appendChild(spreadTable)
@@ -26,39 +30,50 @@ function createRow(ticker) {
     return row
 }
 
-function setRowData(row, ticker, priceToExchange, spreads) {
-    // Object.entries(priceToExchange).forEach((entry) => {
-    //     const [exchange, price] = entry
-    //     row.getElementsByClassName("col-" + exchange).item(0).textContent = price.noExponents()
-    // })
+function setCellColor(cell, elem) {
+    if (elem.diff >= 1 && elem.diff < 5)
+        cell.classList.add("spread-cell-ok")
+    else if (elem.diff >= 5)
+        cell.classList.add("spread-cell-perfect")
+    else cell.classList.add("spread-cell-default")
+}
+
+function setRowData(row, ticker, spreads) {
     spreads.forEach((elem, index) => {
         let cell = row.getElementsByClassName("spread-row").item(0).cells[index]
-        cell.getElementsByClassName("p-diff").item(0).textContent = elem.diff
+        //TODO: real diff view, not 1000+
+        cell.getElementsByClassName("p-diff").item(0).textContent = (elem.diff > 1000 ? "1000+" : elem.diff)
         cell.getElementsByClassName("p-base").item(0).textContent = elem.base
         cell.getElementsByClassName("p-target").item(0).textContent = elem.target
+        cell.onmouseenter = getTickerInfoMouseOverEvent
+        cell.onmouseout = getTickerInfoMouseOutEvent
         //TODO: check why sometimes color does not set
-        if (elem.diff >= 1 && elem.diff < 5)  cell.style.backgroundColor = "#F6D892"
-        if (elem.diff >= 5)  cell.style.backgroundColor = "#8DB590"
+        setCellColor(cell, elem)
     })
 }
 
 function subscribe() {
+    //TODO: remove hardcoded host+port
     eventSource = new EventSource("http://localhost:8080/api/prices")
     eventSource.addEventListener("prices", event => {
-        const data = JSON.parse(event.data)
+        data = JSON.parse(event.data)
         let ticker = data.ticker
-        let priceToExchange = data.priceToExchange
         let spreads = data.spreads
         let tickerRow = document.getElementById("row-" + ticker)
-        if (tickerRow == null && !_.isEmpty(priceToExchange)) {
-            tickerRow = createRow(ticker, priceToExchange)
+        if (tickerRow == null) {
+            tickerRow = createRow(ticker)
             priceTable.appendChild(tickerRow)
         }
-        setRowData(tickerRow, ticker, priceToExchange, spreads)
+        setRowData(tickerRow, ticker, spreads)
+
+        let priceToExchange = data.priceToExchange
+        if (priceToExchange != null) {
+            updateSpreadInfoTable(data, selectedSpreadTarget)
+        }
     })
 }
 
-
+//TODO: low prio. Do creation on filling
 function createSpreadTable(tickerRowId) {
     let td = document.createElement("td")
     let table = document.createElement("table")
@@ -78,7 +93,7 @@ function createSpreadTable(tickerRowId) {
     return td
 }
 
-function createSpreadElement(){
+function createSpreadElement() {
     let td = document.createElement("td")
     let diff = document.createElement("p")
     let buyEx = document.createElement("p")
@@ -111,6 +126,52 @@ Number.prototype.noExponents = function () {
     while (mag--) z += '0';
     return str + z;
 }
+
+function getTickerInfoMouseOverEvent(event) {
+    const ticker = event.target.closest(".ticker-row").firstChild.textContent
+    document.getElementById("info-ticker").textContent = ticker
+    selectedSpreadTarget = event.target.closest(".col-spread")
+    const baseEx = event.target.getElementsByClassName("p-base")[0].textContent
+    const targetEx = event.target.getElementsByClassName("p-target")[0].textContent
+
+    fillSpreadInfoTable(ticker, baseEx, targetEx)
+    requestPrices(ticker)
+}
+
+function getTickerInfoMouseOutEvent(event) {
+}
+
+function fillSpreadInfoTable(ticker, baseEx, targetEx) {
+    axios.get("http://localhost:8080/api/getTickerInfo/" + ticker)
+        .then((response) => {
+            infoTable.rows[0].cells[1].textContent = baseEx
+            infoTable.rows[1].cells[1].textContent = targetEx
+            infoTable.rows[0].cells[2].textContent = response.data.priceToExchange[baseEx]
+            infoTable.rows[1].cells[2].textContent = response.data.priceToExchange[targetEx]
+        })
+
+    const spread = selectedSpreadTarget.getElementsByClassName("p-diff")[0].textContent
+    document.getElementById("info-spread").textContent = spread
+}
+
+function updateSpreadInfoTable(data, selectedSpreadTarget) {
+    const baseEx = selectedSpreadTarget.getElementsByClassName("p-base")[0].textContent
+    const targetEx = selectedSpreadTarget.getElementsByClassName("p-target")[0].textContent
+    infoTable.rows[0].cells[1].textContent = baseEx
+    infoTable.rows[1].cells[1].textContent = targetEx
+    //TODO: price with no exponents
+    let price;
+    if ((price = data.priceToExchange[baseEx]) != null) infoTable.rows[0].cells[2].textContent = price
+    if ((price = data.priceToExchange[targetEx]) != null) infoTable.rows[1].cells[2].textContent = price
+
+    const spread = selectedSpreadTarget.getElementsByClassName("p-diff")[0].textContent
+    document.getElementById("info-spread").textContent = spread
+}
+
+function requestPrices(ticker) {
+    axios.get("http://localhost:8080/api/enablePrices/" + ticker)
+}
+
 
 
 
