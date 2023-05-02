@@ -25,6 +25,7 @@ public class MarketLocalCache {
     private static final Map<String, CoinDTO> coinMap = new ConcurrentHashMap<>();
 
     //TODO: костыль сука бесит
+    //TODO: а нужен ли он вообще?
     @Autowired
     private PropertiesProvider staticPropertiesProvider;
 
@@ -43,7 +44,7 @@ public class MarketLocalCache {
         tickerWithRequestedPrice = ticker;
     }
 
-    public static void disablePriceForTicker(String ticker) {
+    public static void disablePriceForTicker() {
         tickerWithRequestedPrice = null;
     }
 

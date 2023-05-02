@@ -2,6 +2,7 @@ package com.onedigit.utah.api.impl.rest;
 
 import com.onedigit.utah.api.impl.BaseExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
+import com.onedigit.utah.model.NetworkAvailabilityDTO;
 import com.onedigit.utah.model.api.common.RestResponse;
 import com.onedigit.utah.model.api.mexc.rest.MexcRestResponse;
 import com.onedigit.utah.model.api.mexc.rest.MexcRestResponseObject;
@@ -11,9 +12,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
@@ -51,5 +54,15 @@ public class MexcAdapterImpl extends BaseExchangeAdapter {
     @Override
     public Exchange getExchangeName() {
         return Exchange.MEXC;
+    }
+
+    @Override
+    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(String ticker) {
+        return null;
+    }
+
+    @Override
+    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(String ticker) {
+        return null;
     }
 }

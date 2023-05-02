@@ -1,25 +1,32 @@
 package com.onedigit.utah.controllers;
 
+import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.CoinDTO;
+import com.onedigit.utah.model.Exchange;
+import com.onedigit.utah.model.NetworkAvailabilityDTO;
+import com.onedigit.utah.model.api.common.RestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
 import com.onedigit.utah.service.event.PriceChangeEventProcessor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/api")
 @RestController
 public class MainController {
     private final PriceChangeEventProcessor eventProcessor;
 
-    public MainController(PriceChangeEventProcessor eventProcessor) {
+    private final Map<Exchange, ExchangeAdapter> adapters;
+
+    public MainController(PriceChangeEventProcessor eventProcessor, Map<Exchange, ExchangeAdapter> adapters) {
         this.eventProcessor = eventProcessor;
+        this.adapters = adapters;
     }
 
     @GetMapping(path = "/prices", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -48,7 +55,6 @@ public class MainController {
         return "Hi";
     }
 
-
     @GetMapping(path = "/getTickerInfo/{ticker}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CoinDTO> getTickerInfo(@PathVariable String ticker) {
         if (!MarketLocalCache.isTickerExists(ticker)) {
@@ -64,7 +70,17 @@ public class MainController {
     }
 
     @GetMapping(path = "/disablePrices", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void disablePrices(@PathVariable String ticker) {
-        MarketLocalCache.disablePriceForTicker(ticker);
+    public void disablePrices() {
+        MarketLocalCache.disablePriceForTicker();
+    }
+
+    @PostMapping(path = "/withdrawAvailability/", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(@RequestParam Exchange exchange, @RequestParam String ticker) {
+        return adapters.get(exchange).isWithdrawAvailable(ticker);
+    }
+
+    @PostMapping(path = "/depositAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(@RequestParam Exchange exchange, @RequestParam String ticker) {
+        return adapters.get(exchange).isDepositAvailable(ticker);
     }
 }

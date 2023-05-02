@@ -1,7 +1,9 @@
 package com.onedigit.utah.api.impl.rest;
 
+import com.onedigit.utah.api.BybitApiHelper;
 import com.onedigit.utah.api.impl.BaseExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
+import com.onedigit.utah.model.NetworkAvailabilityDTO;
 import com.onedigit.utah.model.api.bybit.rest.BybitRestResponse;
 import com.onedigit.utah.model.api.common.RestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -58,5 +61,28 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
     @Override
     public Exchange getExchangeName() {
         return Exchange.BYBIT;
+    }
+
+    @Override
+    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(String ticker) {
+        log.info("Initiate isWithdrawAvailable call from bybit");
+
+        Map<String, List<String>> paramsMap = Map.of("coin", List.of(ticker));
+
+        return get(BYBIT_API_REST_GET_DEPOSIT_WITHDRAW_AVAILABILITY,
+                paramsMap,
+                httpHeaders -> httpHeaders.putAll(BybitApiHelper.buildHeadersWithSignature(paramsMap)),
+                BybitRestResponse.class)
+                .map(response -> transformAvailabilityResponse());
+
+    }
+
+    @Override
+    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(String ticker) {
+        return null;
+    }
+
+    private List<NetworkAvailabilityDTO> transformAvailabilityResponse() {
+        return null;
     }
 }
