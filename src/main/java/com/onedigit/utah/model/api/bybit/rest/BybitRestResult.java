@@ -11,4 +11,5 @@ public class BybitRestResult extends JsonSerializable {
     @JsonProperty("list")
     List<BybitRestTicker> tickers;
     String category;
+    List<BybitRestRow> rows;
 }

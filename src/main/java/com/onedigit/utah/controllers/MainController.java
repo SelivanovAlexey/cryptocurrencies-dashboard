@@ -4,7 +4,6 @@ import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.CoinDTO;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.NetworkAvailabilityDTO;
-import com.onedigit.utah.model.api.common.RestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
 import com.onedigit.utah.service.event.PriceChangeEventProcessor;
 import org.springframework.http.MediaType;
@@ -74,13 +73,15 @@ public class MainController {
         MarketLocalCache.disablePriceForTicker();
     }
 
-    @PostMapping(path = "/withdrawAvailability/", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(@RequestParam Exchange exchange, @RequestParam String ticker) {
+    @PostMapping(path = "/withdrawAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(@RequestParam(value = "exchange") Exchange exchange,
+                                                                  @RequestParam(value = "ticker") String ticker) {
         return adapters.get(exchange).isWithdrawAvailable(ticker);
     }
 
     @PostMapping(path = "/depositAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(@RequestParam Exchange exchange, @RequestParam String ticker) {
+    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(@RequestParam(value = "exchange") Exchange exchange,
+                                                                 @RequestParam(value = "ticker") String ticker) {
         return adapters.get(exchange).isDepositAvailable(ticker);
     }
 }

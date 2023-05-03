@@ -38,8 +38,8 @@ public class BybitApiHelper {
         String stringToSign = timestamp + apiKey + queryString;
 
         Mac sha256HMAC = Mac.getInstance("HmacSHA256");
-        SecretKeySpec secret_key = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
-        sha256HMAC.init(secret_key);
+        SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
+        sha256HMAC.init(secretKey);
         return bytesToHex(sha256HMAC.doFinal(stringToSign.getBytes()));
     }
 

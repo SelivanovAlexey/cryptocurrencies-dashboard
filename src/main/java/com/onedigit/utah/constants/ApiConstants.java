@@ -26,7 +26,7 @@ public interface ApiConstants {
     String BYBIT_API_REST_BASE_URL = "https://api.bybit.com";
     String BYBIT_API_REST_GET_TICKERS = "/v5/market/tickers";
     String BYBIT_API_WS_SPOT_URL = "wss://stream.bybit.com/v5/public/spot";
-    String BYBIT_API_REST_GET_DEPOSIT_WITHDRAW_AVAILABILITY = "/v5/asset/coin/query-info";
+    String BYBIT_API_REST_GET_COIN_INFO = "/v5/asset/coin/query-info";
 
     /**
      * MEXC EXCHANGE REGION
