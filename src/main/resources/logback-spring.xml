@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-
+    <!--TODO: implement rest logging instead of getPricesRequest-->
     <root level="INFO">
-        <appender-ref ref="OVERALL_LOG"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 
     <logger name="com.onedigit.utah.api.impl" level="INFO">
@@ -18,6 +18,12 @@
         <append>false</append>
         <encoder>
             <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 

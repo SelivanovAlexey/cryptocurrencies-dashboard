@@ -73,13 +73,13 @@ public class MainController {
         MarketLocalCache.disablePriceForTicker();
     }
 
-    @PostMapping(path = "/withdrawAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/withdrawAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(@RequestParam(value = "exchange") Exchange exchange,
                                                                   @RequestParam(value = "ticker") String ticker) {
         return adapters.get(exchange).isWithdrawAvailable(ticker);
     }
 
-    @PostMapping(path = "/depositAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/depositAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(@RequestParam(value = "exchange") Exchange exchange,
                                                                  @RequestParam(value = "ticker") String ticker) {
         return adapters.get(exchange).isDepositAvailable(ticker);

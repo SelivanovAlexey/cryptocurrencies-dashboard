@@ -18,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,7 +29,10 @@ import static com.onedigit.utah.constants.ApiConstants.*;
 @Service
 public class BybitAdapterImpl extends BaseExchangeAdapter {
 
-    public BybitAdapterImpl(@Qualifier("bybitRestApiClient") WebClient bybitRestApiClient) {
+    private final BybitApiHelper apiHelper;
+
+    public BybitAdapterImpl(@Qualifier("bybitRestApiClient") WebClient bybitRestApiClient, BybitApiHelper apiHelper) {
+        this.apiHelper = apiHelper;
         this.webClient = bybitRestApiClient;
     }
 
@@ -70,10 +74,9 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
     public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(String ticker) {
         log.info("Initiate isWithdrawAvailable call from bybit");
         Map<String, List<String>> paramsMap = Map.of("coin", List.of(ticker));
-
         return get(BYBIT_API_REST_GET_COIN_INFO,
                 paramsMap,
-                httpHeaders -> httpHeaders.putAll(BybitApiHelper.buildHeadersWithSignature(paramsMap)),
+                httpHeaders -> httpHeaders.putAll(apiHelper.buildHeadersWithSignature(paramsMap)),
                 BybitRestResponse.class)
                 .map(response -> transformAvailabilityResponse(response, TransferType.WITHDRAW));
     }
@@ -86,22 +89,28 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
 
         return get(BYBIT_API_REST_GET_COIN_INFO,
                 paramsMap,
-                httpHeaders -> httpHeaders.putAll(BybitApiHelper.buildHeadersWithSignature(paramsMap)),
+                httpHeaders -> httpHeaders.putAll(apiHelper.buildHeadersWithSignature(paramsMap)),
                 BybitRestResponse.class)
                 .map(response -> transformAvailabilityResponse(response, TransferType.DEPOSIT));
     }
 
     //TODO: NPE checks and error handling
     private List<NetworkAvailabilityDTO> transformAvailabilityResponse(BybitRestResponse response, TransferType type) {
-        return response.getResult().getRows().get(0).getChains().stream()
-                .map(chain ->
-                        NetworkAvailabilityDTO.builder()
-                                .networkChainName(chain.getChain())
-                                .networkChainType(chain.getChainType())
-                                .type(type)
-                                .isAvailable("1".equals(getAvailabilityFromTransferType(chain, type)))
-                                .build())
-                .collect(Collectors.toList());
+        List<NetworkAvailabilityDTO> result;
+        if (response.getResult().getRows().isEmpty()) {
+            result = Collections.emptyList();
+        } else {
+            result = response.getResult().getRows().get(0).getChains().stream()
+                    .map(chain ->
+                            NetworkAvailabilityDTO.builder()
+                                    .networkChainName(chain.getChain())
+                                    .networkChainType(chain.getChainType())
+                                    .type(type)
+                                    .isAvailable("1".equals(getAvailabilityFromTransferType(chain, type)))
+                                    .build())
+                    .collect(Collectors.toList());
+        }
+        return result;
     }
 
     private String getAvailabilityFromTransferType(BybitRestChain chain, TransferType type) {

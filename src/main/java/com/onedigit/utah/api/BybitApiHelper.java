@@ -17,33 +17,37 @@ import java.util.stream.Collectors;
 @Service
 public class BybitApiHelper {
     @Value("${bybit.api.key.value}")
-    private static String apiKey;
+    private String apiKey;
 
     @Value("${bybit.api.key.secret}")
-    private static String secret;
+    private String secret;
+
+    private final String recv_window = "5000";
 
     @SneakyThrows
-    public static HttpHeaders buildHeadersWithSignature(Map<String, List<String>> paramsMap) {
+    public HttpHeaders buildHeadersWithSignature(Map<String, List<String>> paramsMap) {
         String timestamp = Long.toString(ZonedDateTime.now().toInstant().toEpochMilli());
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-BAPI-API-KEY", apiKey);
         headers.add("X-BAPI-SIGN", generateSignature(paramsMap, timestamp));
         headers.add("X-BAPI-TIMESTAMP", timestamp);
+        headers.add("X-BAPI-RECV-WINDOW", recv_window);
         return headers;
     }
 
-    private static String generateSignature(Map<String, List<String>> params, String timestamp) throws NoSuchAlgorithmException, InvalidKeyException {
+    private String generateSignature(Map<String, List<String>> params, String timestamp) throws NoSuchAlgorithmException, InvalidKeyException {
         String queryString = params.entrySet().stream()
-                .map(entry -> entry.getKey() + "=" + entry.getValue()).collect(Collectors.joining("&"));
-        String stringToSign = timestamp + apiKey + queryString;
-
+                .map(entry -> entry.getKey() + "=" + String.join(",", entry.getValue()))
+                .collect(Collectors.joining("&"));
+        String stringToSign = timestamp + apiKey + recv_window + queryString;
         Mac sha256HMAC = Mac.getInstance("HmacSHA256");
+
         SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
         sha256HMAC.init(secretKey);
         return bytesToHex(sha256HMAC.doFinal(stringToSign.getBytes()));
     }
 
-    private static String bytesToHex(byte[] hash) {
+    private String bytesToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : hash) {
             String hex = Integer.toHexString(0xff & b);
