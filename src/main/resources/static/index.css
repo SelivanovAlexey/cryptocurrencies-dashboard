@@ -40,26 +40,24 @@
 .content {
     display: flex;
     flex-direction: row;
-    justify-content: center;
-    /*align-items: center;*/
+    justify-content: space-around;
 }
 
-.placeholder{
+.flux-left{
     min-width: 400px;
-    margin-right: auto;
     visibility: hidden;
 }
 
-.ticker-spread-info {
+.flux-right {
     display: flex;
     position: sticky;
     top: 10px;
-    margin-left: auto;
     width: max-content;
     height: max-content;
+    align-items: center;
 }
 
-.table-container {
+.flux-center {
     display: flex;
     justify-content: center;
     gap: 200px;
