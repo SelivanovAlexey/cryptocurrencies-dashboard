@@ -94,6 +94,7 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
                 .map(response -> transformAvailabilityResponse(response, TransferType.DEPOSIT));
     }
 
+    //TODO: Too many requests if comes some result from API
     //TODO: NPE checks and error handling
     private List<NetworkAvailabilityDTO> transformAvailabilityResponse(BybitRestResponse response, TransferType type) {
         List<NetworkAvailabilityDTO> result;

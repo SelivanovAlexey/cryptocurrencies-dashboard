@@ -54,8 +54,8 @@ public class MainController {
         return "Hi";
     }
 
-    @GetMapping(path = "/getTickerInfo/{ticker}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CoinDTO> getTickerInfo(@PathVariable String ticker) {
+    @GetMapping(path = "/getTickerInfo", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CoinDTO> getTickerInfo(@RequestParam(value = "ticker") String ticker) {
         if (!MarketLocalCache.isTickerExists(ticker)) {
             return ResponseEntity.notFound().build();
         } else {
@@ -63,8 +63,8 @@ public class MainController {
         }
     }
 
-    @GetMapping(path = "/enablePrices/{ticker}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void enablePricesFor(@PathVariable String ticker) {
+    @GetMapping(path = "/enablePrices", produces = MediaType.APPLICATION_JSON_VALUE)
+    public void enablePricesFor(@RequestParam(value = "ticker") String ticker) {
         MarketLocalCache.enablePriceForTicker(ticker);
     }
 

@@ -142,13 +142,23 @@ function getTickerInfoMouseOutEvent(event) {
 }
 
 function fillSpreadInfoTable(ticker, baseEx, targetEx) {
-    axios.get("http://localhost:8080/api/getTickerInfo/" + ticker)
+    axios.get("http://localhost:8080/api/getTickerInfo", {params: {ticker: ticker}})
         .then((response) => {
             infoTable.rows[0].cells[1].textContent = baseEx
             infoTable.rows[1].cells[1].textContent = targetEx
             infoTable.rows[0].cells[2].textContent = response.data.priceToExchange[baseEx]
             infoTable.rows[1].cells[2].textContent = response.data.priceToExchange[targetEx]
         })
+
+        axios.get("http://localhost:8080/api/withdrawAvailability", {params: {exchange: baseEx, ticker: ticker}})
+        .then((wResponse) => {
+            console.log('data1', wResponse)
+        })
+        axios.get("http://localhost:8080/api/depositAvailability", {params: {exchange: baseEx, ticker: ticker}})
+        .then((dResponse) => {
+            console.log('data2', dResponse)
+        })
+
 
     const spread = selectedSpreadTarget.getElementsByClassName("p-diff")[0].textContent
     document.getElementById("info-spread").textContent = spread
@@ -169,7 +179,7 @@ function updateSpreadInfoTable(data, selectedSpreadTarget) {
 }
 
 function requestPrices(ticker) {
-    axios.get("http://localhost:8080/api/enablePrices/" + ticker)
+    axios.get("http://localhost:8080/api/enablePrices", {params: {ticker: ticker}})
 }
 
 
