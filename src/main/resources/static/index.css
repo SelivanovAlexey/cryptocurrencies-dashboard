@@ -1,4 +1,5 @@
 .styled-table {
+    height: fit-content;
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.9em;
