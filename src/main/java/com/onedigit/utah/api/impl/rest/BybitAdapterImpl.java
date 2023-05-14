@@ -4,8 +4,6 @@ import com.onedigit.utah.api.BybitApiHelper;
 import com.onedigit.utah.api.impl.BaseExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
 import com.onedigit.utah.model.NetworkAvailabilityDTO;
-import com.onedigit.utah.model.TransferType;
-import com.onedigit.utah.model.api.bybit.rest.BybitRestChain;
 import com.onedigit.utah.model.api.bybit.rest.BybitRestResponse;
 import com.onedigit.utah.model.api.common.RestResponse;
 import com.onedigit.utah.service.MarketLocalCache;
@@ -15,13 +13,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
@@ -40,7 +37,7 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
      * Retrieves only -USDT tickers
      */
     @Override
-    public Flux<BybitRestResponse> watchMarketData() {
+    public Flux<BybitRestResponse> watchPrices() {
         log.info("Initiate getMarketData call from bybit");
         return getWithRepeat(BYBIT_API_REST_GET_TICKERS,
                 Map.of("category", List.of("spot")),
@@ -49,14 +46,14 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
     }
 
     @Override
-    public void storeMarketData(RestResponse response) {
+    public void storePrices(RestResponse response) {
         ((BybitRestResponse) response).getResult().getTickers().stream()
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "USDT"))
                 .forEach(ticker -> {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(ticker.getLastPrice());
 
-                    MarketLocalCache.put(tt, getExchangeName(), price);
+                    MarketLocalCache.savePrice(tt, getExchangeName(), price);
                 });
     }
 
@@ -71,55 +68,32 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
     }
 
     @Override
-    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(String ticker) {
-        log.info("Initiate isWithdrawAvailable call from bybit");
-        Map<String, List<String>> paramsMap = Map.of("coin", List.of(ticker));
-        return get(BYBIT_API_REST_GET_COIN_INFO,
+    public Flux<? extends RestResponse> watchAvailability() {
+        log.info("Initiate getAvailability call from bybit");
+        Map<String, List<String>> paramsMap = Collections.emptyMap();
+
+        return getWithDelayedRepeat(BYBIT_API_REST_GET_COIN_INFO,
                 paramsMap,
                 httpHeaders -> httpHeaders.putAll(apiHelper.buildHeadersWithSignature(paramsMap)),
-                BybitRestResponse.class)
-                .map(response -> transformAvailabilityResponse(response, TransferType.WITHDRAW));
+                BybitRestResponse.class,
+                Duration.ofMillis(REST_API_GET_AVAILABILITY_FREQUENCY_MS),
+                exchangeApiRetrySpec(log));
     }
 
-
-    @Override
-    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(String ticker) {
-        log.info("Initiate isDepositAvailable call from bybit");
-        Map<String, List<String>> paramsMap = Map.of("coin", List.of(ticker));
-
-        return get(BYBIT_API_REST_GET_COIN_INFO,
-                paramsMap,
-                httpHeaders -> httpHeaders.putAll(apiHelper.buildHeadersWithSignature(paramsMap)),
-                BybitRestResponse.class)
-                .map(response -> transformAvailabilityResponse(response, TransferType.DEPOSIT));
-    }
-
-    //TODO: Too many requests if comes some result from API
     //TODO: NPE checks and error handling
-    private List<NetworkAvailabilityDTO> transformAvailabilityResponse(BybitRestResponse response, TransferType type) {
-        List<NetworkAvailabilityDTO> result;
-        if (response.getResult().getRows().isEmpty()) {
-            result = Collections.emptyList();
-        } else {
-            result = response.getResult().getRows().get(0).getChains().stream()
-                    .map(chain ->
-                            NetworkAvailabilityDTO.builder()
-                                    .networkChainName(chain.getChain())
-                                    .networkChainType(chain.getChainType())
-                                    .type(type)
-                                    .isAvailable("1".equals(getAvailabilityFromTransferType(chain, type)))
-                                    .build())
-                    .collect(Collectors.toList());
-        }
-        return result;
-    }
-
-    private String getAvailabilityFromTransferType(BybitRestChain chain, TransferType type) {
-        String result = "0";
-        switch (type) {
-            case DEPOSIT -> result = chain.getChainDeposit();
-            case WITHDRAW -> result = chain.getChainWithdraw();
-        }
-        return result;
+    @Override
+    public void storeAvailability(RestResponse response) {
+        ((BybitRestResponse) response).getResult().getRows()
+                .forEach(coinRow -> {
+                    List<NetworkAvailabilityDTO> availabilityList = coinRow.getChains().stream()
+                            .map(chain ->
+                                    NetworkAvailabilityDTO.builder()
+                                            .networkChainName(chain.getChain())
+                                            .networkChainType(chain.getChainType())
+                                            .isDepositAvailable("1".equals(chain.getChainDeposit()))
+                                            .isWithdrawAvailable("1".equals(chain.getChainWithdraw()))
+                                            .build()).toList();
+                    MarketLocalCache.saveAvailability(coinRow.getCoin(), getExchangeName(), availabilityList);
+                });
     }
 }

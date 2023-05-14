@@ -2,21 +2,19 @@ package com.onedigit.utah.api.impl.rest;
 
 import com.onedigit.utah.api.impl.BaseExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
-import com.onedigit.utah.model.NetworkAvailabilityDTO;
 import com.onedigit.utah.model.api.common.RestResponse;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 
 public class HuobiAdapterImpl extends BaseExchangeAdapter {
     @Override
-    public Flux<? extends RestResponse> watchMarketData() {
+    public Flux<? extends RestResponse> watchPrices() {
         return null;
     }
 
     @Override
-    public void storeMarketData(RestResponse response) {
+    public void storePrices(RestResponse response) {
 
     }
 
@@ -31,12 +29,12 @@ public class HuobiAdapterImpl extends BaseExchangeAdapter {
     }
 
     @Override
-    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(String ticker) {
+    public Flux<? extends RestResponse> watchAvailability() {
         return null;
     }
 
     @Override
-    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(String ticker) {
-        return null;
+    public void storeAvailability(RestResponse response) {
+
     }
 }

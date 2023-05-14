@@ -1,14 +1,14 @@
 package com.onedigit.utah.service;
 
 import com.onedigit.utah.model.Exchange;
+import com.onedigit.utah.model.NetworkAvailabilityDTO;
 import com.onedigit.utah.model.SpreadDTO;
 import com.onedigit.utah.model.CoinDTO;
+import com.onedigit.utah.model.view.VerboseView;
 import com.onedigit.utah.model.view.SpreadView;
-import com.onedigit.utah.service.event.PriceChangeEventProcessor;
+import com.onedigit.utah.service.event.CacheChangedEventProcessor;
 
-import com.onedigit.utah.util.PropertiesProvider;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,55 +17,86 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-//TODO: check chain networks availability to deposit and withdraw
 //TODO: test copy of coin map array
 @Service
 public class MarketLocalCache {
 
     private static final Map<String, CoinDTO> coinMap = new ConcurrentHashMap<>();
 
-    //TODO: костыль сука бесит
-    //TODO: а нужен ли он вообще?
-    @Autowired
-    private PropertiesProvider staticPropertiesProvider;
+    private static List<String> includeTickers;
 
-    private static PropertiesProvider propertiesProvider;
+    //TODO: WA - to fix
+    @Value("#{'${api.includeTickers}'.split(',')}")
+    public void setIncludeTickers(List<String> includeTickers) {
+        MarketLocalCache.includeTickers = includeTickers;
+    }
 
-    private static String tickerWithRequestedPrice;
+    private static String tickerVerboseFlag;
 
-    public static void put(String ticker, Exchange exchange, BigDecimal price) {
+    public static void savePrice(String ticker, Exchange exchange, BigDecimal price) {
         CoinDTO dto = getTickerInfo(ticker);
-        if (dto != null) {
-            dto.getPriceToExchange().put(exchange, price);
+        if (dto == null) {
+            if (putCondition(ticker)) {
+                dto = new CoinDTO(ticker, new HashMap<>());
+                coinMap.put(ticker, dto);
+            } else return;
+        }
+        saveToCache(dto, exchange, price, dto.getPriceToExchange());
+    }
+
+    public static void saveAvailability(String ticker, Exchange exchange, List<NetworkAvailabilityDTO> list) {
+        CoinDTO dto = getTickerInfo(ticker);
+        if (dto == null) {
+            if (putCondition(ticker)) {
+                dto = new CoinDTO(ticker, new HashMap<>());
+                coinMap.put(ticker, dto);
+            } else return;
+        }
+        saveToCache(dto, exchange, list, dto.getNetworkAvailabilityToExchange());
+    }
+
+    @SuppressWarnings("rawtypes, unchecked")
+    private static void saveToCache(CoinDTO dto, Exchange exchange, Object obj, Map map) {
+        // check if the same value is present in the cache
+        Object oldObj = map.get(exchange);
+        if (!obj.equals(oldObj)) {
+            map.put(exchange, obj);
+            CoinDTO updatedCoin = prepareResponse(dto);
+            if (!updatedCoin.getSpreads().isEmpty()){
+                CacheChangedEventProcessor.publish(updatedCoin);
+            }
         }
     }
 
-    public static void enablePriceForTicker(String ticker) {
-        tickerWithRequestedPrice = ticker;
+    @SuppressWarnings("rawtypes, unchecked")
+    private static CoinDTO prepareResponse(CoinDTO dto) {
+        Map cachedMap = dto.getPriceToExchange();
+        List<SpreadDTO> spreads = MarketLocalCache.calculateSpreads(cachedMap);
+        CoinDTO resultCoin;
+        if (dto.getTicker().equals(tickerVerboseFlag)) {
+            resultCoin = new VerboseView(dto.getTicker(), dto.getPriceToExchange(), spreads, dto.getNetworkAvailabilityToExchange());
+        } else {
+            resultCoin = new SpreadView(dto.getTicker(), spreads);
+        }
+        return resultCoin;
     }
 
-    public static void disablePriceForTicker() {
-        tickerWithRequestedPrice = null;
-    }
-
-    @PostConstruct
-    private void initPropertiesProvider() {
-        propertiesProvider = this.staticPropertiesProvider;
+    public static void enableVerboseInfo(String ticker) {
+        tickerVerboseFlag = ticker;
     }
 
     private MarketLocalCache() {
     }
 
-    public static List<CoinDTO> getAllExchangesData() {
+    public static List<SpreadView> getAllExchangesData() {
         List<CoinDTO> resultList = new ArrayList<>(coinMap.values());
         resultList.forEach(MarketLocalCache::fillSpreads);
-        resultList = resultList.stream().filter(coindto -> !coindto.getSpreads().isEmpty())
+        return resultList.stream().filter(coindto -> !coindto.getSpreads().isEmpty())
                 .map(coinDTO -> new SpreadView(coinDTO.getTicker(), coinDTO.getSpreads()))
                 .collect(Collectors.toList());
-        return resultList;
     }
 
-    public static List<SpreadDTO> calculateSpreads(TickerInfoMap map) {
+    public static List<SpreadDTO> calculateSpreads(Map<Exchange, BigDecimal> map) {
         List<SpreadDTO> spreads = new ArrayList<>();
         for (Map.Entry<Exchange, BigDecimal> entry : map.entrySet()) {
             Exchange exchange = entry.getKey();
@@ -85,71 +116,23 @@ public class MarketLocalCache {
     }
 
     private static void fillSpreads(CoinDTO coin) {
-        coin.setSpreads(calculateSpreads((TickerInfoMap) coin.getPriceToExchange()));
+        coin.setSpreads(calculateSpreads(coin.getPriceToExchange()));
     }
 
-    public static CoinDTO getTickerInfo(String ticker) {
-        CoinDTO ti = coinMap.get(ticker);
-        if (ti == null && putCondition(ticker)) {
-            ti = new CoinDTO(ticker, new TickerInfoMap(ticker));
-            coinMap.put(ticker, ti);
-        }
-        return ti;
-    }
-
-    /**
-     * @param ticker Coin ticker
-     * @return true for storing in cache
-     */
 
     private static boolean putCondition(String ticker) {
         boolean condition = true;
         condition &= !(ticker.endsWith("2S") || ticker.endsWith("3S") || ticker.endsWith("5S") || ticker.endsWith("10S"));
         condition &= !(ticker.endsWith("2L") || ticker.endsWith("3L") || ticker.endsWith("5L") || ticker.endsWith("10L"));
-        condition &= propertiesProvider.getIncludeTickers().get(0).isEmpty() ? true : propertiesProvider.getIncludeTickers().contains(ticker);
+        condition &= includeTickers.get(0).isEmpty() ? true : includeTickers.contains(ticker);
         return condition;
+    }
+
+    public static CoinDTO getTickerInfo(String ticker) {
+        return coinMap.get(ticker);
     }
 
     public static boolean isTickerExists(String ticker) {
         return coinMap.containsKey(ticker);
-    }
-
-    static class TickerInfoMap extends HashMap<Exchange, BigDecimal> {
-        private final String ticker;
-
-        public TickerInfoMap(TickerInfoMap tickerInfoMap, String ticker) {
-            super(tickerInfoMap);
-            this.ticker = ticker;
-        }
-
-        public TickerInfoMap(String ticker) {
-            this.ticker = ticker;
-        }
-
-        @Override
-        public BigDecimal put(Exchange key, BigDecimal value) {
-            BigDecimal price = this.get(key);
-            if (!value.equals(price)) {
-                price = super.put(key, value);
-                if (PriceChangeEventProcessor.getListener() != null) {
-                    CoinDTO coinUpdate = prepareResponse(key, value);
-                    if (!coinUpdate.getSpreads().isEmpty())
-                        PriceChangeEventProcessor.publish(coinUpdate);
-                }
-            }
-            return price;
-        }
-
-        private CoinDTO prepareResponse(Exchange exchange, BigDecimal price) {
-            TickerInfoMap cachedMap = new TickerInfoMap(this, ticker);
-            List<SpreadDTO> spreads = MarketLocalCache.calculateSpreads(cachedMap);
-            CoinDTO resultCoin;
-            if (ticker.equals(tickerWithRequestedPrice)) {
-                resultCoin = new CoinDTO(ticker, Map.of(exchange, price), spreads);
-            } else {
-                resultCoin = new CoinDTO(ticker, spreads);
-            }
-            return resultCoin;
-        }
     }
 }

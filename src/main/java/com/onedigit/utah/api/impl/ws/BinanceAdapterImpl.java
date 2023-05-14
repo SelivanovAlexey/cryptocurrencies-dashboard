@@ -2,24 +2,21 @@ package com.onedigit.utah.api.impl.ws;
 
 import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.Exchange;
-import com.onedigit.utah.model.NetworkAvailabilityDTO;
 import com.onedigit.utah.model.api.common.RestResponse;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
 
 /**
  * Implemented with WebSocket protocol
  */
 public class BinanceAdapterImpl implements ExchangeAdapter {
     @Override
-    public Flux<RestResponse> watchMarketData() {
+    public Flux<RestResponse> watchPrices() {
         return null;
     }
 
     @Override
-    public void storeMarketData(RestResponse response) {
+    public void storePrices(RestResponse response) {
 
     }
 
@@ -34,12 +31,12 @@ public class BinanceAdapterImpl implements ExchangeAdapter {
     }
 
     @Override
-    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(String ticker) {
+    public Flux<? extends RestResponse> watchAvailability() {
         return null;
     }
 
     @Override
-    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(String ticker) {
-        return null;
+    public void storeAvailability(RestResponse response) {
+
     }
 }

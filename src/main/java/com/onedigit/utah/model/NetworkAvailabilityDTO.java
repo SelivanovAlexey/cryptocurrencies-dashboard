@@ -10,6 +10,6 @@ import lombok.Data;
 public class NetworkAvailabilityDTO {
     String networkChainName;
     String networkChainType;
-    TransferType type;
-    boolean isAvailable;
+    boolean isDepositAvailable;
+    boolean isWithdrawAvailable;
 }

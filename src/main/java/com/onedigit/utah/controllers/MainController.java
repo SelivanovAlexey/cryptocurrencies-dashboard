@@ -3,9 +3,8 @@ package com.onedigit.utah.controllers;
 import com.onedigit.utah.api.ExchangeAdapter;
 import com.onedigit.utah.model.CoinDTO;
 import com.onedigit.utah.model.Exchange;
-import com.onedigit.utah.model.NetworkAvailabilityDTO;
 import com.onedigit.utah.service.MarketLocalCache;
-import com.onedigit.utah.service.event.PriceChangeEventProcessor;
+import com.onedigit.utah.service.event.CacheChangedEventProcessor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
@@ -13,17 +12,16 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Map;
 
 @RequestMapping("/api")
 @RestController
 public class MainController {
-    private final PriceChangeEventProcessor eventProcessor;
+    private final CacheChangedEventProcessor eventProcessor;
 
     private final Map<Exchange, ExchangeAdapter> adapters;
 
-    public MainController(PriceChangeEventProcessor eventProcessor, Map<Exchange, ExchangeAdapter> adapters) {
+    public MainController(CacheChangedEventProcessor eventProcessor, Map<Exchange, ExchangeAdapter> adapters) {
         this.eventProcessor = eventProcessor;
         this.adapters = adapters;
     }
@@ -65,23 +63,6 @@ public class MainController {
 
     @GetMapping(path = "/enablePrices", produces = MediaType.APPLICATION_JSON_VALUE)
     public void enablePricesFor(@RequestParam(value = "ticker") String ticker) {
-        MarketLocalCache.enablePriceForTicker(ticker);
-    }
-
-    @GetMapping(path = "/disablePrices", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void disablePrices() {
-        MarketLocalCache.disablePriceForTicker();
-    }
-
-    @GetMapping(path = "/withdrawAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<List<NetworkAvailabilityDTO>> isWithdrawAvailable(@RequestParam(value = "exchange") Exchange exchange,
-                                                                  @RequestParam(value = "ticker") String ticker) {
-        return adapters.get(exchange).isWithdrawAvailable(ticker);
-    }
-
-    @GetMapping(path = "/depositAvailability", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<List<NetworkAvailabilityDTO>> isDepositAvailable(@RequestParam(value = "exchange") Exchange exchange,
-                                                                 @RequestParam(value = "ticker") String ticker) {
-        return adapters.get(exchange).isDepositAvailable(ticker);
+        MarketLocalCache.enableVerboseInfo(ticker);
     }
 }
