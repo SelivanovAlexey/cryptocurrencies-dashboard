@@ -16,6 +16,8 @@ import java.util.Map;
 
 @RequestMapping("/api")
 @RestController
+//TODO: remove hardcode
+@CrossOrigin(origins = "http://localhost:63342")
 public class MainController {
     private final CacheChangedEventProcessor eventProcessor;
 

@@ -1,3 +1,4 @@
+<!--TODO: low prio. Make loader when page starts-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,7 +27,6 @@
             <p style="margin-top: 0" class="spread-ticker">
                 <!--    TODO: make USDT prefix-->
                 <span id="info-ticker" style="font-family: sans-serif; font-size: 1.7em; margin-left: 10px"></span>
-<!--                <span style="font-family: sans-serif; font-size: 1.7em; margin-left: 10px">/USDT</span>-->
             </p>
             <p>
                 <span id="info-spread" class="spread-value" style="font-family: sans-serif; font-size: 1.7em; margin-left: 10px"></span>
@@ -34,10 +34,10 @@
             <table class="styled-table" id="info-table">
                 <thead>
                 <tr>
-                    <th></th>
-                    <th>Exchange</th>
-                    <th>Price</th>
-                    <th>Availability</th>
+                    <th class="header-null"></th>
+                    <th class="header-exchange">Exchange</th>
+                    <th class="header-price">Price</th>
+                    <th class="header-availability">Availability</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -46,13 +46,13 @@
                     <td class="vertical-header">Buy</td>
                     <td></td>
                     <td></td>
-                    <td class="availability-table"></td>
+                    <td class="td-availability-table"></td>
                 </tr>
                 <tr>
                     <td class="vertical-header">Sell</td>
                     <td></td>
                     <td></td>
-                    <td class="availability-table"></td>
+                    <td class="td-availability-table"></td>
                 </tr>
                 </tbody>
             </table>

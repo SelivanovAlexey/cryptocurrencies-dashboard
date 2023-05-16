@@ -68,13 +68,13 @@ function subscribe() {
 
         let prices = data.priceToExchange
         let networks = data.networkAvailabilityToExchange
-        if (priceToExchange != null && networks != null) {
+        if (prices != null && networks != null) {
             updateSpreadInfoTable(data, selectedSpreadTarget)
         }
     })
 }
 
-//TODO: low prio. Do creation on filling
+//TODO: low prio. Do creation on filling. Why?
 function createSpreadTable(tickerRowId) {
     let td = document.createElement("td")
     let table = document.createElement("table")
@@ -149,11 +149,14 @@ function fillSpreadInfoTable(ticker, baseEx, targetEx) {
             infoTable.rows[1].cells[1].textContent = targetEx
             infoTable.rows[0].cells[2].textContent = response.data.priceToExchange[baseEx]
             infoTable.rows[1].cells[2].textContent = response.data.priceToExchange[targetEx]
+            createAvailabilityTable(response.data, baseEx, targetEx)
         })
+
 
     const spread = selectedSpreadTarget.getElementsByClassName("p-diff")[0].textContent
     document.getElementById("info-spread").textContent = spread
 }
+
 
 function updateSpreadInfoTable(data, selectedSpreadTarget) {
     const baseEx = selectedSpreadTarget.getElementsByClassName("p-base")[0].textContent
@@ -165,9 +168,64 @@ function updateSpreadInfoTable(data, selectedSpreadTarget) {
     if ((price = data.priceToExchange[baseEx]) != null) infoTable.rows[0].cells[2].textContent = price
     if ((price = data.priceToExchange[targetEx]) != null) infoTable.rows[1].cells[2].textContent = price
 
+    createAvailabilityTable(data, baseEx, targetEx)
+
     const spread = selectedSpreadTarget.getElementsByClassName("p-diff")[0].textContent
     document.getElementById("info-spread").textContent = spread
 }
+
+function createAvailabilityTable(data, baseEx, targetEx) {
+    let tableForBaseEx = document.createElement("table")
+    let tableForTargetEx = document.createElement("table")
+    tableForBaseEx.classList.add("availability-table")
+    tableForTargetEx.classList.add("availability-table")
+
+    //TODO: refactor
+    infoTable.rows[0].cells[3].innerHTML = ''
+    infoTable.rows[0].cells[3].appendChild(tableForBaseEx)
+    infoTable.rows[1].cells[3].innerHTML = ''
+    infoTable.rows[1].cells[3].appendChild(tableForTargetEx)
+    if(data.networkAvailabilityToExchange!= null){
+        if (baseEx in data.networkAvailabilityToExchange) {
+            data.networkAvailabilityToExchange[baseEx]
+                .filter(network => network.withdrawAvailable === true)
+                .forEach((elem, index) => {
+                    let networkCell = document.createElement("td")
+                    networkCell.classList.add("col-network")
+                    let chainNameP = document.createElement("p")
+                    let chainTypeP = document.createElement("p")
+                    chainNameP.textContent = elem.networkChainName
+                    chainTypeP.textContent = elem.networkChainType
+                    networkCell.classList.add("availability-cell")
+                    chainNameP.classList.add("p-chain")
+                    chainTypeP.classList.add("p-type")
+                    networkCell.appendChild(chainNameP)
+                    networkCell.appendChild(chainTypeP)
+                    tableForBaseEx.appendChild(networkCell)
+                })
+        }
+
+        if (targetEx in data.networkAvailabilityToExchange) {
+            data.networkAvailabilityToExchange[targetEx]
+                .filter(network => network.depositAvailable === true)
+                .forEach((elem, index) => {
+                    let networkCell = document.createElement("td")
+                    let chainNameP = document.createElement("p")
+                    let chainTypeP = document.createElement("p")
+                    chainNameP.textContent = elem.networkChainName
+                    chainTypeP.textContent = elem.networkChainType
+                    networkCell.classList.add("availability-cell")
+                    chainNameP.classList.add("p-chain")
+                    chainTypeP.classList.add("p-type")
+                    networkCell.appendChild(chainNameP)
+                    networkCell.appendChild(chainTypeP)
+                    tableForTargetEx.appendChild(networkCell)
+                })
+        }
+    }
+
+}
+
 
 function requestPrices(ticker) {
     axios.get("http://localhost:8080/api/enablePrices", {params: {ticker: ticker}})

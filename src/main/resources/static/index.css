@@ -1,3 +1,4 @@
+/*TODO: generalize some classes*/
 .styled-table {
     height: fit-content;
     border-collapse: collapse;
@@ -7,6 +8,10 @@
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     text-align: left;
+}
+
+#info-table{
+    min-width: 600px;
 }
 
 .styled-table thead tr {
@@ -24,8 +29,9 @@
     font-weight: bold;
 }
 
+/*TODO: make smth with it*/
 .styled-table th,
-.styled-table td:not(.td-spread-details):not(.col-spread) {
+.styled-table td:not(.td-spread-details):not(.col-spread):not(.availability-cell):not(.td-availability-table):not(.col-network) {
     padding: 12px 15px;
 }
 
@@ -127,4 +133,47 @@
 
 .spread-cell-default{
     background-color: white;
+}
+
+.header-availability{
+    width: 40%;
+}
+
+.header-exchange{
+    width: 10%;
+}
+
+.header-price{
+    width: 15%;
+}
+
+.availability-cell{
+    width: 8vh;
+    padding: 4px 2px;
+}
+
+.header-null{
+    width: 10%;
+}
+
+.td-availability-table{
+    padding: 0;
+}
+
+.availability-table{
+    border-collapse: collapse;
+}
+
+.p-chain{
+    font-size: 0.8em;
+    display: block;
+    text-align: left;
+    margin: 0;
+}
+
+.p-type{
+    font-size: 0.6em;
+    display: block;
+    text-align: left;
+    margin: 0;
 }
