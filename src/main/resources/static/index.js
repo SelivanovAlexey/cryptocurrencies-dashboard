@@ -174,6 +174,7 @@ function updateSpreadInfoTable(data, selectedSpreadTarget) {
     document.getElementById("info-spread").textContent = spread
 }
 
+//TODO: it makes resize when 5 elements shown
 function createAvailabilityTable(data, baseEx, targetEx) {
     let tableForBaseEx = document.createElement("table")
     let tableForTargetEx = document.createElement("table")
