@@ -51,7 +51,7 @@
 }
 
 .flux-left{
-    min-width: 400px;
+    /* min-width: 0; */
     visibility: hidden;
 }
 
@@ -136,24 +136,24 @@
 }
 
 .header-availability{
-    width: 40%;
+    width: 50%;
 }
 
 .header-exchange{
-    width: 10%;
+    width: 5%;
 }
 
 .header-price{
-    width: 15%;
+    width: 20%;
 }
 
 .availability-cell{
-    width: 8vh;
+    width: 10px;
     padding: 4px 2px;
 }
 
 .header-null{
-    width: 10%;
+    width: 5%;
 }
 
 .td-availability-table{

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.Map;
 public class CoinDTO {
     private String ticker;
     private Map<Exchange, BigDecimal> priceToExchange = new HashMap<>();
-    private List<SpreadDTO> spreads;
+    private List<SpreadDTO> spreads = new ArrayList<>();
     private Map<Exchange, List<NetworkAvailabilityDTO>> networkAvailabilityToExchange = new HashMap<>();
 
     public CoinDTO(@NonNull String ticker, Map<Exchange, BigDecimal> priceToExchange) {

@@ -1,17 +1,19 @@
 package com.onedigit.utah.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onedigit.utah.model.api.kucoin.ws.KucoinWsMessage;
+import com.onedigit.utah.model.integration.kucoin.ws.KucoinWsMessage;
+import lombok.experimental.UtilityClass;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.MultiValueMap;
 
-@Component
+import java.util.HashMap;
+import java.util.function.Consumer;
+
+@UtilityClass
 public class CommonUtils {
 
-    static ObjectMapper mapper;
-
-    public CommonUtils(ObjectMapper mapper) {
-        CommonUtils.mapper = mapper;
-    }
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public static ObjectMapper getJsonMapper() {
         return mapper;
@@ -31,6 +33,4 @@ public class CommonUtils {
                 .type("subscribe")
                 .build().asJsonString();
     }
-
-
 }

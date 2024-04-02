@@ -13,6 +13,6 @@ import java.util.Map;
 public class VerboseView extends CoinDTO {
     public VerboseView(@NonNull String ticker, Map<Exchange, BigDecimal> pricesToExchange,
                        List<SpreadDTO> spreads, Map<Exchange, List<NetworkAvailabilityDTO>> networkAvailability) {
-        super(ticker, pricesToExchange, spreads, networkAvailability);
+//        super(ticker, pricesToExchange, spreads, networkAvailability);
     }
 }

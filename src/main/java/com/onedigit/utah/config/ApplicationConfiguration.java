@@ -1,24 +1,15 @@
 package com.onedigit.utah.config;
 
-import com.onedigit.utah.api.ExchangeAdapter;
-import com.onedigit.utah.api.impl.BaseExchangeAdapter;
-import com.onedigit.utah.model.Exchange;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.*;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
-import reactor.netty.http.client.HttpClient;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
-
 
 @Configuration
 public class ApplicationConfiguration {
@@ -28,26 +19,36 @@ public class ApplicationConfiguration {
             .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(frameSize))
             .build();
 
+    private final WebClient.Builder autoConfiguredWebClientBuilder;
+
+    public ApplicationConfiguration(@Autowired WebClient.Builder autoConfiguredWebClientBuilder) {
+        this.autoConfiguredWebClientBuilder = autoConfiguredWebClientBuilder;
+    }
+
     @Bean
-    public WebClient kucoinRestApiClient(WebClient.Builder builder) {
-        return builder
-                .exchangeStrategies(strategy)
+    @Qualifier("baseWebClientBuilder")
+    public WebClient.Builder baseWebClientBuilder() {
+        return autoConfiguredWebClientBuilder
+                .exchangeStrategies(strategy);
+    }
+
+    @Bean
+    @Qualifier("kucoinRestApiClient")
+    public WebClient kucoinRestApiClient(@Qualifier("baseWebClientBuilder") WebClient.Builder baseWebClientBuilder) {
+        return baseWebClientBuilder
                 .baseUrl(KUCOIN_API_REST_BASE_URL).build();
     }
 
     @Bean
-    public WebClient mexcRestApiClient(WebClient.Builder builder) {
-        return builder
-                .exchangeStrategies(strategy)
+    @Qualifier("mexcRestApiClient")
+    public WebClient mexcRestApiClient(@Qualifier("baseWebClientBuilder") WebClient.Builder baseWebClientBuilder) {
+        return baseWebClientBuilder
                 .baseUrl(MEXC_API_REST_BASE_URL).build();
     }
     @Bean
-    public WebClient bybitRestApiClient(WebClient.Builder builder) {
-        return builder
-                .exchangeStrategies(strategy)
-                .clientConnector(new ReactorClientHttpConnector(
-                        HttpClient.create().wiretap(true)
-                ))
+    @Qualifier("bybitRestApiClient")
+    public WebClient bybitRestApiClient(@Qualifier("baseWebClientBuilder") WebClient.Builder baseWebClientBuilder) {
+        return baseWebClientBuilder
                 .baseUrl(BYBIT_API_REST_BASE_URL).build();
     }
     @Bean
@@ -55,11 +56,11 @@ public class ApplicationConfiguration {
         return new ReactorNettyWebSocketClient();
     }
 
-    @Bean
-    public Map<Exchange, ExchangeAdapter> availableAdaptersProvider(List<BaseExchangeAdapter> adapters){
-        return adapters.stream()
-                .filter(ExchangeAdapter::isEnabled)
-                .collect(Collectors.toMap(ExchangeAdapter::getExchangeName, Function.identity()));
-    }
+//    @Bean
+//    public Map<Exchange, ExchangeAdapter> availableAdaptersProvider(List<BaseExchangeAdapter> adapters){
+//        return adapters.stream()
+//                .filter(ExchangeAdapter::isEnabled)
+//                .collect(Collectors.toMap(ExchangeAdapter::getExchangeName, Function.identity()));
+//    }
 
 }

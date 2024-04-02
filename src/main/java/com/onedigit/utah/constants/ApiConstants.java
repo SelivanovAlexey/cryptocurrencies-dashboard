@@ -7,17 +7,18 @@ public interface ApiConstants {
      */
     Integer FRONTEND_UPDATE_FREQUENCY_MS = 1000;
     //TODO: to remove when implement ws approach
-    Integer REST_API_CALLS_FREQUENCY_MS = 0;
+    Integer REST_API_CALLS_FREQUENCY_MS = 1000;
 
-    Integer REST_API_GET_AVAILABILITY_FREQUENCY_MS = 5000;
+    Integer REST_API_GET_AVAILABILITY_FREQUENCY_MS = 1000;
 
-    Long HEALTHCHECK_INTERVAL_MS = 120000L;
+    Long HEALTHCHECK_INTERVAL_MS = 1000L;
 
     /**
      * KUCOIN EXCHANGE REGION
      */
     String KUCOIN_API_REST_BASE_URL = "https://api.kucoin.com";
     String KUCOIN_API_REST_GET_TICKERS = "/api/v1/market/allTickers";
+    String KUCOIN_API_REST_GET_CURRENCY_LIST = "/api/v3/currencies";
     String KUCOIN_API_REST_GET_CONNECT_TOKEN_URL = "/api/v1/bullet-public";
     String KUCOIN_API_WS_SPOT_URL = "wss://stream.bybit.com/v5/public/spot";
     String KUCOIN_TOPIC_MARKET_DATA = "/market/ticker:all";
@@ -36,5 +37,6 @@ public interface ApiConstants {
 
     String MEXC_API_REST_BASE_URL = "https://api.mexc.com";
     String MEXC_API_REST_GET_TICKERS = "/api/v3/ticker/price";
+    String MEXC_API_REST_GET_CURRENCY_INFO = "/api/v3/capital/config/getall";
 
 }

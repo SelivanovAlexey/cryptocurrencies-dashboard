@@ -1,0 +1,20 @@
+package com.onedigit.utah.model2.integration.kucoin.rest;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.onedigit.utah.util.JsonSerializable;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+
+import java.util.List;
+
+@EqualsAndHashCode(callSuper = true)
+@Value
+public class KucoinRestData extends JsonSerializable {
+    Long time;
+    @JsonProperty("ticker")
+    List<KucoinRestTicker> tickerList;
+    List<KucoinRestCurrency> currencyList;
+    String token;
+    List<KucoinRestInstanceServer> instanceServers;
+
+}
