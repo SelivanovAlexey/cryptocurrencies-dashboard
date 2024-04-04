@@ -13,8 +13,11 @@ public class KucoinRestData extends JsonSerializable {
     Long time;
     @JsonProperty("ticker")
     List<KucoinRestTicker> tickerList;
-    List<KucoinRestCurrency> currencyList;
     String token;
     List<KucoinRestInstanceServer> instanceServers;
+    String currency;
+    String name;
+    String fullName;
+    List<KucoinRestChain> chains;
 
 }

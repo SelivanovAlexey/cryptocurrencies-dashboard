@@ -1,5 +1,6 @@
 package com.onedigit.utah.integration.common;
 
+import com.onedigit.utah.model2.integration.common.RestResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.CollectionUtils;
@@ -24,34 +25,27 @@ public class RestApiAdapter {
 
     protected WebClient webClient;
 
-    protected <T> Flux<T> getWithDelayedRepeat(String uriPath, Consumer<MultiValueMap<String, String>> queryParamsConsumer, Consumer<HttpHeaders> headersConsumer, Class<T> responseClass, Duration delay, Retry retrySpec) {
-        return get(
-                uriBuilder -> uriBuilder.path(uriPath).queryParams(buildParamsFromConsumer(queryParamsConsumer)).build(), headersConsumer, responseClass)
-                .repeat()
-                .delayElements(delay)
-                .retryWhen(retrySpec);
-    }
-
-    protected <T> Flux<T> getWithDelayedRepeat(String uriPath, Map<String, List<String>> queryParams, Class<T> responseClass, Duration delay, Retry retrySpec) {
-        return get(uriBuilder -> uriBuilder.path(uriPath).queryParams(CollectionUtils.toMultiValueMap(queryParams)).build(), responseClass)
-                .repeat()
-                .delayElements(delay)
-                .retryWhen(retrySpec);
-    }
-
-    protected <T> Flux<T> getWithDelayedRepeat(String uriPath, Class<T> responseClass, Duration delay, Retry retrySpec) {
-        return get(uriBuilder -> uriBuilder.path(uriPath).build(), responseClass)
-                .repeat()
-                .delayElements(delay)
-                .retryWhen(retrySpec);
-    }
-
-    protected <T> Mono<T> get(Function<UriBuilder, URI> uriBuilderFunction, Class<T> responseClass) {
-        return exchange(HttpMethod.GET, uriBuilderFunction, responseClass);
+    protected <T> Mono<T> get(String uriPath,
+                              Consumer<MultiValueMap<String, String>> queryParamsConsumer,
+                              Consumer<HttpHeaders> headersConsumer,
+                              Class<T> responseClass) {
+        return get(uriBuilder -> uriBuilder.path(uriPath).queryParams(buildParamsFromConsumer(queryParamsConsumer)).build(), headersConsumer, responseClass);
     }
 
     protected <T> Mono<T> get(Function<UriBuilder, URI> uriBuilderFunction, Consumer<HttpHeaders> headersConsumer, Class<T> responseClass) {
         return exchange(HttpMethod.GET, uriBuilderFunction, headersConsumer, responseClass);
+    }
+
+    protected <T> Mono<T> get(String uriPath, Map<String, List<String>> queryParams, Class<T> responseClass) {
+        return get(uriBuilder -> uriBuilder.path(uriPath).queryParams(CollectionUtils.toMultiValueMap(queryParams)).build(), responseClass);
+    }
+
+    protected <T> Mono<T> get(String uriPath, Class<T> responseClass) {
+        return get(uriBuilder -> uriBuilder.path(uriPath).build(), responseClass);
+    }
+
+    protected <T> Mono<T> get(Function<UriBuilder, URI> uriBuilderFunction, Class<T> responseClass) {
+        return exchange(HttpMethod.GET, uriBuilderFunction, responseClass);
     }
 
     private <T> Mono<T> exchange(HttpMethod method, Function<UriBuilder, URI> uriBuilderFunction,

@@ -17,10 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -47,46 +47,46 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
      * Retrieves only -USDT tickers
      */
     @Override
-    public Flux<BybitRestResponse> watchPrices() {
-        log.info("Initiate watchPrices call from bybit");
-        return getWithDelayedRepeat(BYBIT_API_REST_GET_TICKERS,
+    public Mono<BybitRestResponse> getPrices() {
+        log.info("Initiate getPrices call from bybit");
+        return get(BYBIT_API_REST_GET_TICKERS,
                 Map.of("category", List.of("spot")),
-                BybitRestResponse.class,
-                Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS),
-                exchangeApiRetrySpec(log));
+                BybitRestResponse.class);
     }
 
     @Override
-    public void populateSpreads(RestResponse response) {
-        log.debug("response from bybit");
+    public RestResponse populateSpreads(RestResponse response) {
+        log.debug("response prices from bybit");
         ((BybitRestResponse) response).getResult().getTickers().stream()
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "USDT"))
                 .forEach(ticker -> {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(ticker.getLastPrice());
                     val coin = cache.savePrice(tt, Exchange.BYBIT, price);
-                    val spreads = cache.calculateSpreads(coin);
-                    if (spreads != null) {
-                        //TODO: populate event to websocket client
+                    if(coin != null){
+                        val spreads = cache.calculateSpreads(coin);
                     }
+//                    if (spreads != null) {
+//                        //TODO: populate event to websocket client
+//                    }
                 });
+        return response;
     }
 
     @Override
-    public Flux<? extends RestResponse> watchAvailability() {
-        log.info("Initiate watchAvailability call from bybit");
+    public Mono<? extends RestResponse> getAvailability() {
+        log.info("Initiate getAvailability call from bybit");
         MultiValueMap<String, String> params = CollectionUtils.toMultiValueMap(Map.of("category", List.of("spot")));
-        return getWithDelayedRepeat(BYBIT_API_REST_GET_COIN_INFO,
+        return get(BYBIT_API_REST_GET_COIN_INFO,
                 queryParams -> queryParams.putAll(params),
                 httpHeaders -> httpHeaders.addAll(apiHelper.buildHeadersWithSignature(params)),
-                BybitRestResponse.class,
-                Duration.ofMillis(REST_API_GET_AVAILABILITY_FREQUENCY_MS),
-                exchangeApiRetrySpec(log));
+                BybitRestResponse.class);
     }
 
-    public void populateAvailability(RestResponse response) {
+    public RestResponse populateAvailability(RestResponse response) {
+        log.debug("response availability from bybit");
         ((BybitRestResponse) response).getResult().getRows().stream()
-                .filter(currency -> cache.hasPricesFor(currency.getCoin()))
+                .filter(currency -> cache.hasPricesFor(Exchange.BYBIT, currency.getCoin()))
                 .forEach(currency -> {
                     List<NetworkAvailabilityDTO> naDTOs = currency.getChains().stream().map(chain ->
                             NetworkAvailabilityDTO.builder()
@@ -101,5 +101,6 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
                         //TODO: populate event to websocket client
                     }
                 });
+        return response;
     }
 }

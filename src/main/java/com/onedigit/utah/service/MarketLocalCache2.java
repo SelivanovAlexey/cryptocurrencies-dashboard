@@ -12,20 +12,24 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+//TODO: concurrentModification???
 //TODO: check locking work correctness
 @Service
 @Slf4j
 public class MarketLocalCache2 {
 
-    private static final List<CoinDTO> coinPricesList = new ArrayList<>();
+    //    private static final List<CoinDTO> coinPricesList = new CopyOnWriteArrayList<>();
+    private static final Map<String, CoinDTO> coinPricesList = new HashMap<>();
 
     private static final List<NetworkAvailabilityDTO> coinChainsAvailabilityList = new ArrayList<>();
 
     private static List<String> includeTickers;
 
     private static String lockedTicker = "";
+
     //TODO: WA - to fix
     @Value("#{'${api.includeTickers}'.split(',')}")
     public void setIncludeTickers(List<String> includeTickers) {
@@ -35,37 +39,38 @@ public class MarketLocalCache2 {
     public CoinDTO savePrice(String ticker, Exchange exchange, BigDecimal price) {
         // initialize if absent
         CoinDTO coinDTO;
-        if ((coinDTO = IterableUtils.find(coinPricesList, val -> val.getExchange().equals(exchange) && val.getTicker().equals(ticker))) == null) {
+        if ((coinDTO = coinPricesList.get(exchange + ticker)) == null) {
             if (putCondition(ticker)) {
-                log.debug("saving {}.{}: {}", exchange, ticker, price);
                 coinDTO = CoinDTO.builder().ticker(ticker).price(price).exchange(exchange).build();
-                coinPricesList.add(coinDTO);
+                coinPricesList.put(exchange + ticker, coinDTO);
                 return coinDTO;
             }
-        } else if (!price.equals(coinDTO.getPrice())
-                && !isLockedFor(ticker)
-        ) {
-            log.debug("updating {}.{}: {}", exchange, ticker, price);
+        } else if (!price.equals(coinDTO.getPrice()) && !isLockedFor(ticker)) {
             coinDTO.setPrice(price);
         }
         return coinDTO;
+
     }
 
     public List<SpreadDTO> calculateSpreads(CoinDTO coinDTO) {
         // setting lock for current ticker to never be updated during spread calculation
         lockedTicker = coinDTO.getTicker();
         List<SpreadDTO> spreads = new ArrayList<>();
-        List<CoinDTO> exchangeCoins = coinPricesList.stream().filter(coin -> coinDTO.getTicker().equals(coin.getTicker()))
+        List<CoinDTO> exchangeCoins = coinPricesList.entrySet().stream()
+                .filter(entry -> entry.getKey().endsWith(coinDTO.getTicker()))
+                .map(Map.Entry::getValue)
                 .toList();
         exchangeCoins.forEach(cCoinDTO -> {
             if (!cCoinDTO.getExchange().equals(coinDTO.getExchange())) {
                 //TODO: NPE check!
-                Double diff =
-                        cCoinDTO.getPrice()
-                                .subtract(coinDTO.getPrice())
-                                .divide(coinDTO.getPrice(), 3, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
-                SpreadDTO spread = new SpreadDTO(cCoinDTO.getTicker(), coinDTO.getExchange(), cCoinDTO.getExchange(), diff);
-                spreads.add(spread);
+                if ((!coinDTO.getPrice().equals(BigDecimal.ZERO))) {
+                    Double diff =
+                            cCoinDTO.getPrice()
+                                    .subtract(coinDTO.getPrice())
+                                    .divide(coinDTO.getPrice(), 3, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
+                    SpreadDTO spread = new SpreadDTO(cCoinDTO.getTicker(), coinDTO.getExchange(), cCoinDTO.getExchange(), diff);
+                    spreads.add(spread);
+                }
             }
         });
         spreads.sort(Comparator.comparing(SpreadDTO::getDiff).reversed());
@@ -87,8 +92,7 @@ public class MarketLocalCache2 {
         return ticker.equals(lockedTicker);
     }
 
-    public boolean hasPricesFor(String ticker) {
-        CoinDTO coinDTO = IterableUtils.find(coinPricesList, coin -> ticker.equals(coin.getTicker()));
-        return Objects.nonNull(coinDTO);
+    public boolean hasPricesFor(Exchange exchange, String ticker) {
+        return Objects.nonNull(coinPricesList.get(exchange + ticker));
     }
 }

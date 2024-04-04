@@ -3,6 +3,7 @@ package com.onedigit.utah.integration.impl.rest;
 import com.onedigit.utah.integration.impl.BaseExchangeAdapter;
 import com.onedigit.utah.integration.helpers.MexcApiHelper;
 import com.onedigit.utah.model2.NetworkAvailabilityDTO;
+import com.onedigit.utah.model2.integration.bybit.rest.BybitRestResponse;
 import com.onedigit.utah.model2.integration.common.RestResponse;
 import com.onedigit.utah.model2.integration.mexc.rest.MexcRestResponse;
 import com.onedigit.utah.model2.integration.mexc.rest.MexcRestResponseCoinObject;
@@ -18,12 +19,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
@@ -46,46 +49,48 @@ public class MexcAdapterImpl extends BaseExchangeAdapter {
     }
 
     @Override
-    public Flux<MexcRestResponse> watchPrices() {
-        log.info("Initiate watchPrices call from mexc");
-        return getWithDelayedRepeat(MEXC_API_REST_GET_TICKERS, MexcRestResponseTickerObject[].class, Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS), exchangeApiRetrySpec(log))
+    protected Mono<? extends RestResponse> getPrices() {
+        log.info("Initiate getPrices call from mexc");
+        return get(MEXC_API_REST_GET_TICKERS,
+                MexcRestResponseTickerObject[].class)
                 .map(response -> new MexcRestResponse(Arrays.asList(response), null));
+
     }
 
     @Override
-    public void populateSpreads(RestResponse response) {
-        log.debug("response from mexc");
+    protected Mono<? extends RestResponse> getAvailability() {
+        log.info("Initiate getAvailability call from mexc");
+        return get(MEXC_API_REST_GET_CURRENCY_INFO,
+                params -> params.putAll(apiHelper.buildParamsWithSignature()),
+                httpHeaders -> httpHeaders.addAll(apiHelper.buildHeaders()),
+                MexcRestResponseCoinObject[].class)
+                .map(response -> new MexcRestResponse(null, Arrays.asList(response)));
+    }
+
+    @Override
+    public RestResponse populateSpreads(RestResponse response) {
+        log.debug("response prices from mexc");
         ((MexcRestResponse) response).getTickers().stream()
                 .filter(resp -> StringUtils.endsWith(resp.getSymbol(), "USDT"))
                 .forEach(resp -> {
                     String tt = StringUtils.substringBefore(resp.getSymbol(), "USDT");
                     BigDecimal price = new BigDecimal(resp.getPrice());
                     val coin = cache.savePrice(tt, Exchange.MEXC, price);
-                    val spreads = cache.calculateSpreads(coin);
-                    if (spreads != null) {
-                        //TODO: populate event to websocket client
+                    if (coin != null) {
+                        val spreads = cache.calculateSpreads(coin);
                     }
+//                    if (spreads != null) {
+//                        //TODO: populate event to websocket client
+//                    }
                 });
+        return response;
     }
 
     @Override
-    public Flux<? extends RestResponse> watchAvailability() {
-        log.info("Initiate watchAvailability call from mexc");
-        return getWithDelayedRepeat(MEXC_API_REST_GET_CURRENCY_INFO,
-                params -> params.putAll(apiHelper.buildParamsWithSignature()),
-                httpHeaders -> httpHeaders.addAll(apiHelper.buildHeaders()),
-                MexcRestResponseCoinObject[].class,
-                Duration.ofMillis(REST_API_GET_AVAILABILITY_FREQUENCY_MS),
-                exchangeApiRetrySpec(log))
-                .map(mexcRestResponseCoinObjects -> new MexcRestResponse(null, Arrays.asList(mexcRestResponseCoinObjects)));
-
-    }
-
-    @Override
-    public void populateAvailability(RestResponse response) {
-        log.debug("response availability time: {}", ZonedDateTime.now());
+    public RestResponse populateAvailability(RestResponse response) {
+        log.debug("response availability from mexc");
         ((MexcRestResponse) response).getCoins().stream()
-                .filter(currency -> cache.hasPricesFor(currency.getCoin()))
+                .filter(currency -> cache.hasPricesFor(Exchange.MEXC, currency.getCoin()))
                 .forEach(currency -> {
                     List<NetworkAvailabilityDTO> naDTOs = currency.getChains().stream().map(chain ->
                             NetworkAvailabilityDTO.builder()
@@ -99,6 +104,7 @@ public class MexcAdapterImpl extends BaseExchangeAdapter {
                         //TODO: populate event to websocket client
                     }
                 });
+        return response;
     }
 
 }

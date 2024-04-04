@@ -7,7 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.Map;
 
 @EnableScheduling
@@ -20,10 +22,9 @@ public class UtahApplication {
         adapters.values().stream()
                 .filter(ExchangeAdapter::isEnabled)
                 .forEach(adapter -> {
-//                            adapter.watchPrices().subscribe(adapter::populateSpreads);
-                            adapter.watchAvailability().subscribe(adapter::populateAvailability);
-                        }
-                );
+//                    adapter.getAndPopulateAvailability().subscribe();
+                    adapter.getAndPopulateSpreads().subscribe();
+                });
     }
 
 //	@EventListener(ApplicationReadyEvent.class)
