@@ -90,7 +90,7 @@ public class MexcAdapterImpl extends BaseExchangeAdapter {
     public RestResponse populateAvailability(RestResponse response) {
         log.debug("response availability from mexc");
         ((MexcRestResponse) response).getCoins().stream()
-                .filter(currency -> cache.hasPricesFor(Exchange.MEXC, currency.getCoin()))
+                .filter(currency -> cache.hasPricesFor(currency.getCoin()))
                 .forEach(currency -> {
                     List<NetworkAvailabilityDTO> naDTOs = currency.getChains().stream().map(chain ->
                             NetworkAvailabilityDTO.builder()

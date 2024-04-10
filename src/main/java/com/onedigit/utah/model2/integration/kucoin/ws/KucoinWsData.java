@@ -1,16 +1,14 @@
 package com.onedigit.utah.model2.integration.kucoin.ws;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
-@EqualsAndHashCode(callSuper = true)
 @Value
 @Builder
 @Jacksonized
-public class KucoinWsData extends JsonSerializable {
+public class KucoinWsData {
     String sequence;
     String bestAsk;
     String size;

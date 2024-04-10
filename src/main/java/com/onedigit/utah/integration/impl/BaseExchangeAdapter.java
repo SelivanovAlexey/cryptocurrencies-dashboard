@@ -24,7 +24,7 @@ public abstract class BaseExchangeAdapter extends RestApiAdapter implements Exch
     @Setter
     protected Connection connectionStatus = Connection.INACTIVE;
 
-    private final Repeat<Object> repeatStrategy = Repeat.times(Long.MAX_VALUE).fixedBackoff(Duration.ofSeconds(REST_API_CALLS_FREQUENCY_MS));
+    private final Repeat<Object> repeatStrategy = Repeat.times(Long.MAX_VALUE).fixedBackoff(Duration.ofMillis(REST_API_CALLS_FREQUENCY_MS));
     private final Retry retryStrategy =
             Retry.backoff(Long.MAX_VALUE, Duration.ofSeconds(5))
                     .doBeforeRetry(signal -> {

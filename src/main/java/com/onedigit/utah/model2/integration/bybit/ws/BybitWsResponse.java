@@ -1,16 +1,14 @@
 package com.onedigit.utah.model2.integration.bybit.ws;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
-@EqualsAndHashCode(callSuper = true)
 @Value
 @Builder
 @Jacksonized
-public class BybitWsResponse extends JsonSerializable {
+public class BybitWsResponse {
     String topic;
     Long ts;
     String type;

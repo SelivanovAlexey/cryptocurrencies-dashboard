@@ -18,6 +18,8 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
 
@@ -55,7 +57,7 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "-USDT"))
                 .forEach(ticker -> {
                     String tt = StringUtils.substringBefore(ticker.getSymbol(), "-USDT");
-                    BigDecimal price = new BigDecimal(ticker.getLast());
+                    BigDecimal price = Optional.ofNullable(ticker.getLast()).map(BigDecimal::new).orElse(BigDecimal.ZERO);
                     val coin = cache.savePrice(tt, Exchange.KUCOIN, price);
                     if (coin != null) {
                         val spreads = cache.calculateSpreads(coin);
@@ -69,22 +71,22 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
 
     @Override
     public RestResponse populateAvailability(RestResponse response) {
-        ((KucoinRestResponse) response).getData().stream()
-                .filter(currency -> cache.hasPricesFor(Exchange.KUCOIN, currency.getCurrency()))
-                .forEach(currency -> {
-                    List<NetworkAvailabilityDTO> naDTOs = currency.getChains().stream().map(chain ->
-                            NetworkAvailabilityDTO.builder()
-                                    .networkChainName(chain.getChainId())
-                                    .networkChainType(chain.getChainName())
-                                    .isWithdrawAvailable(chain.isWithdrawEnabled())
-                                    .isDepositAvailable(chain.isDepositEnabled())
-                                    .minWithdrawalFee(chain.getWithdrawalMinFee())
-                                    .build()
-                    ).toList();
-                    if (naDTOs != null) {
-                        //TODO: populate event to websocket client
-                    }
-                });
+//        ((KucoinRestResponse) response).getData().stream()
+//                .filter(currency -> cache.hasPricesFor(currency.getCurrency()))
+//                .forEach(currency -> {
+//                    List<NetworkAvailabilityDTO> naDTOs = currency.getChains().stream().map(chain ->
+//                            NetworkAvailabilityDTO.builder()
+//                                    .networkChainName(chain.getChainId())
+//                                    .networkChainType(chain.getChainName())
+//                                    .isWithdrawAvailable(chain.isWithdrawEnabled())
+//                                    .isDepositAvailable(chain.isDepositEnabled())
+//                                    .minWithdrawalFee(chain.getWithdrawalMinFee())
+//                                    .build()
+//                    ).toList();
+//                    if (naDTOs != null) {
+//                        //TODO: populate event to websocket client
+//                    }
+//                });
         return response;
     }
 }

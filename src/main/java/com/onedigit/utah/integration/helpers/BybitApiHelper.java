@@ -24,7 +24,7 @@ public class BybitApiHelper {
     @Value("${bybit.api.key.secret}")
     private String secret;
 
-    private final String recv_window = "5000";
+    private final String recv_window = "15000";
 
     @SneakyThrows
     public HttpHeaders buildHeadersWithSignature(Map<String, List<String>> paramsMap) {

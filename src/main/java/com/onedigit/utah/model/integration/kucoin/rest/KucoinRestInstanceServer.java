@@ -1,12 +1,10 @@
 package com.onedigit.utah.model.integration.kucoin.rest;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-@EqualsAndHashCode(callSuper = true)
 @Value
-public class KucoinRestInstanceServer extends JsonSerializable {
+public class KucoinRestInstanceServer {
     String endpoint;
     Boolean encrypt;
     String protocol;

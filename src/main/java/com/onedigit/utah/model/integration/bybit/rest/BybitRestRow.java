@@ -1,12 +1,11 @@
 package com.onedigit.utah.model.integration.bybit.rest;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.Value;
 
 import java.util.List;
 
 @Value
-public class BybitRestRow extends JsonSerializable {
+public class BybitRestRow {
     String name;
     String coin;
     String remainAmount;

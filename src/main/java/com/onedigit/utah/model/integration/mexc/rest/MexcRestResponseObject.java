@@ -1,10 +1,9 @@
 package com.onedigit.utah.model.integration.mexc.rest;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.Value;
 
 @Value
-public class MexcRestResponseObject extends JsonSerializable {
+public class MexcRestResponseObject {
     String symbol;
     String price;
 }

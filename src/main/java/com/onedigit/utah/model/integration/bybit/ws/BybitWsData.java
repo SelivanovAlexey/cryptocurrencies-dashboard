@@ -1,16 +1,14 @@
 package com.onedigit.utah.model.integration.bybit.ws;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 
-@EqualsAndHashCode(callSuper = true)
 @Value
 @Builder
 @Jacksonized
-public class BybitWsData extends JsonSerializable {
+public class BybitWsData {
     String symbol;
     String lastPrice;
     String highPrice24h;

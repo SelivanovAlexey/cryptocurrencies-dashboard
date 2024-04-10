@@ -5,8 +5,10 @@ import com.onedigit.utah.lifecycle.LocalContextProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -22,8 +24,12 @@ public class UtahApplication {
         adapters.values().stream()
                 .filter(ExchangeAdapter::isEnabled)
                 .forEach(adapter -> {
-//                    adapter.getAndPopulateAvailability().subscribe();
-                    adapter.getAndPopulateSpreads().subscribe();
+                    Disposable d1 = adapter.getAndPopulateAvailability()
+//                            .take(10).doOnComplete(() -> SpringApplication.exit(LocalContextProvider.getContext(), () -> 0))
+                            .subscribe();
+                    Disposable d2 = adapter.getAndPopulateSpreads()
+//                            .take(10).doOnComplete(() -> SpringApplication.exit(LocalContextProvider.getContext(), () -> 0))
+                            .subscribe();
                 });
     }
 

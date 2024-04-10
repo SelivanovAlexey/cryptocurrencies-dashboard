@@ -12,25 +12,4 @@ import java.util.function.Consumer;
 
 @UtilityClass
 public class CommonUtils {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    public static ObjectMapper getJsonMapper() {
-        return mapper;
-    }
-
-    public static String buildKucoinPingMessage(String id) {
-        return KucoinWsMessage.builder()
-                .id(id)
-                .type("ping")
-                .build().asJsonString();
-    }
-
-    public static String buildKucoinSubscribeMessage(String id, String topic) {
-        return KucoinWsMessage.builder()
-                .id(id)
-                .topic(topic)
-                .type("subscribe")
-                .build().asJsonString();
-    }
 }

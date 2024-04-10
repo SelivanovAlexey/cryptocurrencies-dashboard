@@ -1,12 +1,9 @@
 package com.onedigit.utah.model2.integration.kucoin.rest;
 
-import com.onedigit.utah.util.JsonSerializable;
-import lombok.EqualsAndHashCode;
 import lombok.Value;
 
-@EqualsAndHashCode(callSuper = true)
 @Value
-public class KucoinRestTicker extends JsonSerializable {
+public class KucoinRestTicker {
     String symbol;
     String last;
 }

@@ -1,10 +1,9 @@
 package com.onedigit.utah.model.integration.bybit.rest;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.Value;
 
 @Value
-public class BybitRestChain extends JsonSerializable {
+public class BybitRestChain {
     String chainType;
     String confirmation;
     String withdrawFee;

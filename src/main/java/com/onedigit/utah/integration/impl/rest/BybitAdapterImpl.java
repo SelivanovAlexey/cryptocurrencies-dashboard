@@ -20,7 +20,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +85,7 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
     public RestResponse populateAvailability(RestResponse response) {
         log.debug("response availability from bybit");
         ((BybitRestResponse) response).getResult().getRows().stream()
-                .filter(currency -> cache.hasPricesFor(Exchange.BYBIT, currency.getCoin()))
+                .filter(currency -> cache.hasPricesFor(currency.getCoin()))
                 .forEach(currency -> {
                     List<NetworkAvailabilityDTO> naDTOs = currency.getChains().stream().map(chain ->
                             NetworkAvailabilityDTO.builder()
@@ -94,7 +93,8 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
                                     .networkChainType(chain.getChainType())
                                     .isWithdrawAvailable(chain.getChainWithdraw().equals("1"))
                                     .isDepositAvailable(chain.getChainWithdraw().equals("1"))
-                                    .minWithdrawalFee(new BigDecimal(chain.getWithdrawFee()))
+                                    .minWithdrawalFee(StringUtils.isBlank(chain.getWithdrawFee())
+                                            ? BigDecimal.ZERO : new BigDecimal(chain.getWithdrawFee()))
                                     .build()
                     ).toList();
                     if (naDTOs != null) {

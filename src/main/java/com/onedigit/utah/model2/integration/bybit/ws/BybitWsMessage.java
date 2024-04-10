@@ -1,6 +1,5 @@
 package com.onedigit.utah.model2.integration.bybit.ws;
 
-import com.onedigit.utah.util.JsonSerializable;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -8,11 +7,10 @@ import lombok.extern.jackson.Jacksonized;
 
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Value
 @Builder
 @Jacksonized
-public class BybitWsMessage extends JsonSerializable {
+public class BybitWsMessage {
     String req_id;
     String op;
     List<String> args;

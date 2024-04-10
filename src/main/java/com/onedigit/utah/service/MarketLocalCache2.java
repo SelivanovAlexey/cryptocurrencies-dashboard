@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -21,10 +22,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MarketLocalCache2 {
 
-    //    private static final List<CoinDTO> coinPricesList = new CopyOnWriteArrayList<>();
-    private static final Map<String, CoinDTO> coinPricesList = new HashMap<>();
+    private static final List<CoinDTO> coinPricesList = new CopyOnWriteArrayList<>();
 
-    private static final List<NetworkAvailabilityDTO> coinChainsAvailabilityList = new ArrayList<>();
+    private static final List<NetworkAvailabilityDTO> coinChainsAvailabilityList = Collections.synchronizedList(new ArrayList<>());
 
     private static List<String> includeTickers;
 
@@ -37,29 +37,42 @@ public class MarketLocalCache2 {
     }
 
     public CoinDTO savePrice(String ticker, Exchange exchange, BigDecimal price) {
+//        log.debug("start savePrice with exchange {} and thread {}", exchange, Thread.currentThread());
+//        long startTime = Instant.now().getEpochSecond();
         // initialize if absent
         CoinDTO coinDTO;
-        if ((coinDTO = coinPricesList.get(exchange + ticker)) == null) {
+//        synchronized (coinPricesList){
+            coinDTO = IterableUtils.find(coinPricesList, val -> val.getExchange().equals(exchange) && val.getTicker().equals(ticker));
+//        }
+        if (coinDTO == null) {
             if (putCondition(ticker)) {
                 coinDTO = CoinDTO.builder().ticker(ticker).price(price).exchange(exchange).build();
-                coinPricesList.put(exchange + ticker, coinDTO);
-                return coinDTO;
+//                synchronized (coinPricesList){
+                    coinPricesList.add(coinDTO);
+//                }
             }
         } else if (!price.equals(coinDTO.getPrice()) && !isLockedFor(ticker)) {
             coinDTO.setPrice(price);
         }
+//        long endTime = Instant.now().getEpochSecond();
+//        log.debug("s {}", (endTime - startTime));
+//        log.debug("end savePrice with exchange {} and thread {}", exchange, Thread.currentThread());
         return coinDTO;
-
     }
 
     public List<SpreadDTO> calculateSpreads(CoinDTO coinDTO) {
+//        log.debug("start calculateSpreads with exchange {} and thread {}", coinDTO.getExchange(), Thread.currentThread());
+//        long startTime = Instant.now().getEpochSecond();
         // setting lock for current ticker to never be updated during spread calculation
         lockedTicker = coinDTO.getTicker();
         List<SpreadDTO> spreads = new ArrayList<>();
-        List<CoinDTO> exchangeCoins = coinPricesList.entrySet().stream()
-                .filter(entry -> entry.getKey().endsWith(coinDTO.getTicker()))
-                .map(Map.Entry::getValue)
-                .toList();
+        List<CoinDTO> exchangeCoins;
+//        synchronized (coinPricesList) {
+            exchangeCoins =
+                    coinPricesList.stream()
+                            .filter(val -> val.getTicker().equals(coinDTO.getTicker()))
+                            .toList();
+//        }
         exchangeCoins.forEach(cCoinDTO -> {
             if (!cCoinDTO.getExchange().equals(coinDTO.getExchange())) {
                 //TODO: NPE check!
@@ -76,6 +89,9 @@ public class MarketLocalCache2 {
         spreads.sort(Comparator.comparing(SpreadDTO::getDiff).reversed());
         // releasing ticker lock
         lockedTicker = "";
+//        log.debug("end calculateSpreads with exchange {} and thread {}", coinDTO.getExchange(), Thread.currentThread());
+//        long endTime = Instant.now().getEpochSecond();
+//        log.debug("c {}", (endTime - startTime));
         return spreads.stream().limit(3).collect(Collectors.toList());
     }
 
@@ -92,7 +108,17 @@ public class MarketLocalCache2 {
         return ticker.equals(lockedTicker);
     }
 
-    public boolean hasPricesFor(Exchange exchange, String ticker) {
-        return Objects.nonNull(coinPricesList.get(exchange + ticker));
+    public boolean hasPricesFor(String ticker) {
+//        long startTime = Instant.now().getEpochSecond();
+//        log.debug("start hasPricesFor on thread {}", Thread.currentThread());
+        boolean result;
+//        synchronized (coinPricesList){
+            result = Objects.nonNull(IterableUtils.find(coinPricesList, val -> val.getTicker().equals(ticker)));
+//        }
+
+//        long endTime = Instant.now().getEpochSecond();
+//        log.debug("h {}", (endTime - startTime));
+//        log.debug("end hasPricesFor on thread {}", Thread.currentThread());
+        return result;
     }
 }
