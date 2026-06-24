@@ -1,8 +1,10 @@
 package com.onedigit.utah.integration.impl.rest;
 
 import com.onedigit.utah.integration.impl.BaseExchangeAdapter;
-import com.onedigit.utah.model2.NetworkAvailabilityDTO;
+import com.onedigit.utah.model2.api.NetworkAvailabilityDTO;
+import com.onedigit.utah.model2.api.SpreadDTO;
 import com.onedigit.utah.model2.integration.common.RestResponse;
+import com.onedigit.utah.model2.integration.kucoin.rest.KucoinRestChain;
 import com.onedigit.utah.model2.integration.kucoin.rest.KucoinRestResponse;
 import com.onedigit.utah.model2.Exchange;
 import com.onedigit.utah.service.MarketLocalCache2;
@@ -17,8 +19,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static com.onedigit.utah.constants.ApiConstants.*;
@@ -51,8 +53,9 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
     }
 
     @Override
-    public RestResponse populateSpreads(RestResponse response) {
+    public List<List<SpreadDTO>> populateSpreads(RestResponse response) {
         log.debug("response from kucoin");
+        List<List<SpreadDTO>> overallSpreads = new ArrayList<>();
         ((KucoinRestResponse) response).getData().get(0).getTickerList().stream()
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "-USDT"))
                 .forEach(ticker -> {
@@ -61,32 +64,35 @@ public class KucoinAdapterImpl extends BaseExchangeAdapter {
                     val coin = cache.savePrice(tt, Exchange.KUCOIN, price);
                     if (coin != null) {
                         val spreads = cache.calculateSpreads(coin);
+                        if (!spreads.isEmpty()) {
+                            overallSpreads.add(spreads);
+                        }
                     }
-//                    if (spreads != null) {
-//                        //TODO: populate event to websocket client
-//                    }
                 });
-        return response;
+        return overallSpreads;
     }
 
     @Override
     public RestResponse populateAvailability(RestResponse response) {
-//        ((KucoinRestResponse) response).getData().stream()
-//                .filter(currency -> cache.hasPricesFor(currency.getCurrency()))
-//                .forEach(currency -> {
-//                    List<NetworkAvailabilityDTO> naDTOs = currency.getChains().stream().map(chain ->
-//                            NetworkAvailabilityDTO.builder()
-//                                    .networkChainName(chain.getChainId())
-//                                    .networkChainType(chain.getChainName())
-//                                    .isWithdrawAvailable(chain.isWithdrawEnabled())
-//                                    .isDepositAvailable(chain.isDepositEnabled())
-//                                    .minWithdrawalFee(chain.getWithdrawalMinFee())
-//                                    .build()
-//                    ).toList();
-//                    if (naDTOs != null) {
-//                        //TODO: populate event to websocket client
-//                    }
-//                });
+        ((KucoinRestResponse) response).getData().stream()
+                .filter(currency -> cache.hasPricesFor(currency.getCurrency()))
+                .forEach(currency -> {
+                    List<KucoinRestChain> chains;
+                    if ((chains = currency.getChains()) != null) {
+                        List<NetworkAvailabilityDTO> naDTOs = chains.stream().map(chain ->
+                                NetworkAvailabilityDTO.builder()
+                                        .networkChainName(chain.getChainId())
+                                        .networkChainType(chain.getChainName())
+                                        .isWithdrawAvailable(chain.isWithdrawEnabled())
+                                        .isDepositAvailable(chain.isDepositEnabled())
+                                        .minWithdrawalFee(chain.getWithdrawalMinFee())
+                                        .build()
+                        ).toList();
+                        if (naDTOs != null) {
+                            //TODO: populate event to websocket client
+                        }
+                    }
+                });
         return response;
     }
 }

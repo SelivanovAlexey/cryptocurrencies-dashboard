@@ -1,14 +1,15 @@
 package com.onedigit.utah.integration;
 
+import com.onedigit.utah.model2.api.SpreadDTO;
 import com.onedigit.utah.model2.integration.common.RestResponse;
-import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface ExchangeAdapter {
     boolean isEnabled();
 
-    Flux<? extends RestResponse> getAndPopulateSpreads();
+    public Flux<List<List<SpreadDTO>>> getSpreadsFlux();
 
     Flux<? extends RestResponse> getAndPopulateAvailability();
 

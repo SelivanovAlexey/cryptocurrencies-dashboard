@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class LocalContextProvider implements ApplicationContextAware {
-    private static ApplicationContext context;
+    private ApplicationContext context;
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         context = applicationContext;
     }
-    public static ApplicationContext getContext() {
-        return context;
+    public ApplicationContext getContext() {
+        return this.context;
     }
 }

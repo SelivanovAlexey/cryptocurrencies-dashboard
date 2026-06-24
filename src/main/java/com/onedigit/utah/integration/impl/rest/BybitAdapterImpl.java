@@ -2,7 +2,8 @@ package com.onedigit.utah.integration.impl.rest;
 
 import com.onedigit.utah.integration.helpers.BybitApiHelper;
 import com.onedigit.utah.integration.impl.BaseExchangeAdapter;
-import com.onedigit.utah.model2.NetworkAvailabilityDTO;
+import com.onedigit.utah.model2.api.NetworkAvailabilityDTO;
+import com.onedigit.utah.model2.api.SpreadDTO;
 import com.onedigit.utah.model2.integration.bybit.rest.BybitRestResponse;
 import com.onedigit.utah.model2.integration.common.RestResponse;
 import com.onedigit.utah.model2.Exchange;
@@ -20,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -54,8 +56,9 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
     }
 
     @Override
-    public RestResponse populateSpreads(RestResponse response) {
+    public List<List<SpreadDTO>> populateSpreads(RestResponse response) {
         log.debug("response prices from bybit");
+        List<List<SpreadDTO>> overallSpreads = new ArrayList<>();
         ((BybitRestResponse) response).getResult().getTickers().stream()
                 .filter(ticker -> StringUtils.endsWith(ticker.getSymbol(), "USDT"))
                 .forEach(ticker -> {
@@ -64,12 +67,15 @@ public class BybitAdapterImpl extends BaseExchangeAdapter {
                     val coin = cache.savePrice(tt, Exchange.BYBIT, price);
                     if(coin != null){
                         val spreads = cache.calculateSpreads(coin);
+                        if (!spreads.isEmpty()) {
+                            overallSpreads.add(spreads);
+                        }
                     }
 //                    if (spreads != null) {
 //                        //TODO: populate event to websocket client
 //                    }
                 });
-        return response;
+        return overallSpreads;
     }
 
     @Override

@@ -11,9 +11,10 @@
 	<groupId>com.onedigit</groupId>
 	<artifactId>utah</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>utah</name>
+    <packaging>pom</packaging>
+    <name>utah</name>
 	<description>Demo project for Spring Boot</description>
-	<properties>
+    <properties>
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
@@ -29,7 +30,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.12.0</version>
+			<version>3.18.0</version>
 		</dependency>
 
 		<dependency>
@@ -84,8 +85,8 @@
 							<version>1.18.26</version>
 						</path>
 					</annotationProcessorPaths>
-					<source>16</source>
-					<target>16</target>
+					<source>17</source>
+					<target>17</target>
 				</configuration>
 			</plugin>
 		</plugins>

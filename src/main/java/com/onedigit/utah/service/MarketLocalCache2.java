@@ -2,8 +2,8 @@ package com.onedigit.utah.service;
 
 import com.onedigit.utah.model2.CoinDTO;
 import com.onedigit.utah.model2.Exchange;
-import com.onedigit.utah.model2.NetworkAvailabilityDTO;
-import com.onedigit.utah.model2.SpreadDTO;
+import com.onedigit.utah.model2.api.NetworkAvailabilityDTO;
+import com.onedigit.utah.model2.api.SpreadDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.IterableUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -53,6 +52,8 @@ public class MarketLocalCache2 {
             }
         } else if (!price.equals(coinDTO.getPrice()) && !isLockedFor(ticker)) {
             coinDTO.setPrice(price);
+        } else {
+            return null;
         }
 //        long endTime = Instant.now().getEpochSecond();
 //        log.debug("s {}", (endTime - startTime));
@@ -81,8 +82,10 @@ public class MarketLocalCache2 {
                             cCoinDTO.getPrice()
                                     .subtract(coinDTO.getPrice())
                                     .divide(coinDTO.getPrice(), 3, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
-                    SpreadDTO spread = new SpreadDTO(cCoinDTO.getTicker(), coinDTO.getExchange(), cCoinDTO.getExchange(), diff);
-                    spreads.add(spread);
+                    if(!diff.equals(0.0)){
+                        SpreadDTO spread = new SpreadDTO(cCoinDTO.getTicker(), coinDTO.getExchange(), cCoinDTO.getExchange(), diff);
+                        spreads.add(spread);
+                    }
                 }
             }
         });

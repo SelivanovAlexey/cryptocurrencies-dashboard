@@ -3,6 +3,7 @@ package com.onedigit.utah.integration.impl;
 import com.onedigit.utah.integration.ExchangeAdapter;
 import com.onedigit.utah.integration.common.RestApiAdapter;
 import com.onedigit.utah.model.Connection;
+import com.onedigit.utah.model2.api.SpreadDTO;
 import com.onedigit.utah.model2.integration.common.RestResponse;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +15,7 @@ import reactor.retry.Repeat;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.util.List;
 
 import static com.onedigit.utah.constants.ApiConstants.REST_API_CALLS_FREQUENCY_MS;
 
@@ -36,7 +38,7 @@ public abstract class BaseExchangeAdapter extends RestApiAdapter implements Exch
                     });
 
     @Override
-    public Flux<? extends RestResponse> getAndPopulateSpreads() {
+    public Flux<List<List<SpreadDTO>>> getSpreadsFlux() {
         return getPrices()
                 .map(this::populateSpreads)
                 .repeatWhen(repeatStrategy)
@@ -55,7 +57,7 @@ public abstract class BaseExchangeAdapter extends RestApiAdapter implements Exch
 
     protected abstract Mono<? extends RestResponse> getAvailability();
 
-    protected abstract RestResponse populateSpreads(RestResponse response);
+    protected abstract List<List<SpreadDTO>> populateSpreads(RestResponse response);
 
     protected abstract RestResponse populateAvailability(RestResponse response);
 }
