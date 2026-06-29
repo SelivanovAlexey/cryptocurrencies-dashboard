@@ -1,38 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!--TODO: implement rest logging instead of getPricesRequest-->
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </root>
-
-    <logger name="com.onedigit.utah.api.impl" level="INFO">
-        <appender-ref ref="API_LOG"/>
-    </logger>
-
-    <logger name="com.onedigit.utah.lifecycle.HealthCheckService" level="INFO">
-        <appender-ref ref="API_LOG"/>
-    </logger>
-
-    <appender name="OVERALL_LOG" class="ch.qos.logback.core.FileAppender">
-        <file>logs/application.log</file>
-        <append>false</append>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
-    </appender>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <property name="LOG_DIR" value="logs"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
+        <encoder><pattern>${CONSOLE_LOG_PATTERN}</pattern><charset>UTF-8</charset></encoder>
     </appender>
 
-    <appender name="API_LOG" class="ch.qos.logback.core.FileAppender">
-        <file>logs/api.log</file>
-        <append>false</append>
-        <encoder>
-            <Pattern>%d [%level] [%thread] %-20logger{10}\(%line\) - %msg%n</Pattern>
-        </encoder>
+    <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/application.log</file>
+        <encoder><pattern>${FILE_LOG_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/application.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
     </appender>
 
+    <appender name="EXCHANGE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/exchange.log</file>
+        <encoder><pattern>${FILE_LOG_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/exchange.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <logger name="com.onedigit.utah.integration" level="INFO" additivity="false">
+            <appender-ref ref="EXCHANGE_FILE"/>
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="com.onedigit.utah.lifecycle.HealthCheckService" level="INFO" additivity="false">
+            <appender-ref ref="EXCHANGE_FILE"/>
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <root level="INFO">
+            <appender-ref ref="APP_FILE"/>
+            <appender-ref ref="STDOUT"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!dev &amp; !prod">
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+        </root>
+    </springProfile>
 </configuration>
